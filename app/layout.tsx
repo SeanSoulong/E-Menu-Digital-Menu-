@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Emoji Online Shop",
+  title: "Eos Menu",
 };
 
 export default function RootLayout({
