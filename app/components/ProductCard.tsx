@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Product } from "../data/products";
+import { Product } from "../data/types";
 
 interface ProductCardProps {
   product: Product;
@@ -21,12 +21,13 @@ export default function ProductCard({ product, onClick }: ProductCardProps) {
       />
       <div className="p-4 ">
         <h3 className="font-semibold text-lg truncate">{product.name}</h3>
-        <p className="text-gray-500 text-sm">{product.category}</p>
         <div className="mt-2 ">
-          <span className="text-lg font-bold text-gray-800">
+          <span className="text-lg font-bold text-[#F05656]">
             {product.priceUsd}
           </span>
-          <span className="text-sm text-gray-500 ml-2">{product.priceKhr}</span>
+          <span className="text-sm text-[#F05656] ml-2">
+            {product.priceKhr}
+          </span>
         </div>
       </div>
     </div>

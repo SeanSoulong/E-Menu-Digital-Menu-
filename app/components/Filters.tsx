@@ -1,5 +1,5 @@
 "use client";
-
+import Image from "next/image";
 import { useState } from "react";
 import { FaSearch, FaTimes } from "react-icons/fa";
 
@@ -21,7 +21,7 @@ export default function Filters({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
-    onSearch(query); // Live search happens here
+    onSearch(query);
   };
 
   const handleClearSearch = () => {
@@ -31,9 +31,18 @@ export default function Filters({
 
   return (
     <div className="w-full lg:w-1/4 p-6 border-b lg:border-r lg:border-b-0 border-[#3F3F3F]">
-      <h2 className="text-2xl font-bold mb-6 text-[#212121]">
-        Emoji Online Shop
-      </h2>
+      <div className="flex items-center mb-6">
+        <Image
+          src="/images/logo_emoji.png"
+          alt="Logo"
+          width={60}
+          height={70}
+          className="cursor-pointer"
+        />
+        <p className="text-[20px] font-bold text-[#212121]">
+          Emoji Online Shop
+        </p>
+      </div>
 
       {/* Search Bar */}
       <div className="mb-6">
@@ -59,8 +68,12 @@ export default function Filters({
       </div>
 
       {/* Categories */}
-      <h3 className="text-xl font-semibold mb-4 text-[#3F3F3F]">Categories</h3>
-      <ul className="space-y-2">
+      <h3 className="text-xl font-semibold mb-4 text-[#3F3F3F] hidden lg:block">
+        Categories
+      </h3>
+
+      {/* Desktop List */}
+      <ul className="space-y-2 hidden lg:block">
         <li>
           <button
             onClick={() => onFilter("All")}
@@ -88,6 +101,33 @@ export default function Filters({
           </li>
         ))}
       </ul>
+
+      {/* Mobile Pills */}
+      <div className="flex gap-3 overflow-x-auto pb-2 lg:hidden scrollbar-hide">
+        <button
+          onClick={() => onFilter("All")}
+          className={`px-4 py-2 border rounded-full whitespace-nowrap transition-colors ${
+            activeCategory === "All"
+              ? "bg-[#3F3F3F] text-white font-semibold"
+              : "border-gray-300 text-gray-700 hover:bg-gray-100"
+          }`}
+        >
+          All
+        </button>
+        {categories.map((category) => (
+          <button
+            key={category}
+            onClick={() => onFilter(category)}
+            className={`px-4 py-2 border rounded-full whitespace-nowrap transition-colors ${
+              activeCategory === category
+                ? "bg-[#3F3F3F] text-white font-semibold"
+                : "border-gray-300 text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            {category}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

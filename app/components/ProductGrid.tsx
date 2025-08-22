@@ -1,5 +1,6 @@
-import { Product } from "../data/products";
+import { Product } from "../data/types";
 import ProductCard from "./ProductCard";
+import Image from "next/image";
 
 interface ProductGridProps {
   products: Product[];
@@ -12,8 +13,15 @@ export default function ProductGrid({
 }: ProductGridProps) {
   if (products.length === 0) {
     return (
-      <div className="flex-1 flex justify-center items-center p-6 text-gray-500 text-lg">
-        No products found for your selection.
+      <div className="flex-1 flex justify-center items-center p-6 text-gray-500 text-lg flex-col">
+        <Image
+          src="/images/box.png"
+          alt="Logo"
+          width={355}
+          height={54}
+          className="cursor-pointer"
+        />
+        <p> No products found for your selection.</p>
       </div>
     );
   }

@@ -1,6 +1,6 @@
 "use client";
-
-import { Product, products } from "./data/products";
+import { Product } from "./data/types";
+import { products } from "./data/products";
 import Filters from "./components/Filters";
 import ProductGrid from "./components/ProductGrid";
 import ProductDetailPopup from "./components/ProductDetailPopup";
@@ -61,7 +61,7 @@ export default function HomePage() {
           activeCategory={activeCategory}
         />
         <div className="flex-1 bg-white">
-          <h1 className="text-3xl font-bold p-6">Product Catalog</h1>
+          <h1 className="text-[20px] font-bold p-6">Product Catalog</h1>
           <ProductGrid
             products={filteredProducts}
             onProductClick={handleProductClick}

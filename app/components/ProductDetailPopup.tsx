@@ -1,4 +1,6 @@
-import { Product } from "../data/products";
+"use client";
+
+import { Product } from "../data/types";
 import Image from "next/image";
 import {
   FaTimes,
@@ -7,6 +9,15 @@ import {
   FaMapMarkerAlt,
   FaPhoneAlt,
 } from "react-icons/fa";
+
+import { Swiper, SwiperSlide } from "swiper/react";
+
+// Import Swiper styles
+import "swiper/css";
+import "swiper/css/pagination";
+
+// Import required modules
+import { Pagination, A11y } from "swiper/modules";
 
 interface ProductDetailPopupProps {
   product: Product | null;
@@ -20,10 +31,12 @@ export default function ProductDetailPopup({
   if (!product) return null;
 
   // Define URLs for the contact links
-  const facebookUrl = "https://www.facebook.com/Limsakhna";
-  const telegramUrl = "https://t.me/sothimaktey";
-  const mapUrl = "https://maps.app.goo.gl/9xi5jv778zCMV5gs8";
-  const phoneUrl = `tel:${product.contact || "098253453"}`; // 'tel:' prefix makes it a clickable phone number
+  const facebookUrl =
+    "[https://www.facebook.com/Limsakhna](https://www.facebook.com/Limsakhna)";
+  const telegramUrl = "[https://t.me/sothimaktey](https://t.me/sothimaktey)";
+  const mapUrl =
+    "[https://maps.app.goo.gl/9xi5jv778zCMV5gs8](https://maps.app.goo.gl/9xi5jv778zCMV5gs8)";
+  const phoneUrl = `tel:${product.contact || "098253453"}`;
 
   return (
     <div className="fixed inset-0 flex items-center justify-center p-4 z-50">
@@ -36,28 +49,32 @@ export default function ProductDetailPopup({
         </button>
 
         <div className="flex flex-col md:flex-row gap-6">
-          {/* Product Image */}
+          {/* Product Image Carousel */}
           <div className="md:w-1/2 flex justify-center relative">
-            <Image
-              src={product.image}
-              alt={product.name}
-              width={400}
-              height={400}
-              className="rounded-lg object-contain max-h-96 border"
-            />
+            <Swiper
+              modules={[Pagination, A11y]}
+              spaceBetween={50}
+              slidesPerView={1}
+              pagination={{ clickable: true }}
+              className="w-full h-full "
+            >
+              {product.images?.map((image, index) => (
+                <SwiperSlide key={index}>
+                  <Image
+                    src={image}
+                    alt={product.name}
+                    width={400}
+                    height={400}
+                    className="rounded-lg object-contain max-h-96 border"
+                  />
+                </SwiperSlide>
+              ))}
+            </Swiper>
           </div>
 
           {/* Product Details */}
           <div className="md:w-1/2 flex flex-col justify-start">
             <div className="mb-4">
-              <div className="flex items-end mb-2">
-                <span className="text-xl md:text-2xl font-bold">
-                  {product.priceUsd}
-                </span>
-                <span className="text-base text-gray-500 ml-2">
-                  {product.priceKhr}
-                </span>
-              </div>
               <p className="text-gray-500 mb-2">ID: {product.id}</p>
               <h2 className="text-2xl md:text-3xl font-bold mb-2">
                 {product.name}
@@ -67,6 +84,12 @@ export default function ProductDetailPopup({
                   <li key={index}>{line}</li>
                 ))}
               </ul>
+              <div className="flex items-end mb-2 text-[#F05656]">
+                <span className="text-xl md:text-2xl font-bold">
+                  {product.priceUsd}
+                </span>
+                <span className="text-base ml-2">{product.priceKhr}</span>
+              </div>
             </div>
 
             {/* Contact / Social */}
