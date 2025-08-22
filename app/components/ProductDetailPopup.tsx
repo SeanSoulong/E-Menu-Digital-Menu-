@@ -20,10 +20,10 @@ export default function ProductDetailPopup({
   if (!product) return null;
 
   // Define URLs for the contact links
-  const facebookUrl = "https://www.facebook.com/your-page-url";
-  const telegramUrl = "https://t.me/your-username";
-  const mapUrl = "https://maps.google.com/?q=your-location";
-  const phoneUrl = `tel:${product.contact || "012554489"}`; // 'tel:' prefix makes it a clickable phone number
+  const facebookUrl = "https://www.facebook.com/Limsakhna";
+  const telegramUrl = "https://t.me/sothimaktey";
+  const mapUrl = "https://maps.app.goo.gl/9xi5jv778zCMV5gs8";
+  const phoneUrl = `tel:${product.contact || "098253453"}`; // 'tel:' prefix makes it a clickable phone number
 
   return (
     <div className="fixed inset-0 flex items-center justify-center p-4 z-50">
