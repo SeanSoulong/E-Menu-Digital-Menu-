@@ -19,13 +19,16 @@ export default function ProductCard({ product, onClick }: ProductCardProps) {
         height={300}
         className="w-full h-48 object-cover"
       />
-      <div className="p-4 ">
-        <h3 className="font-semibold text-lg truncate">{product.name}</h3>
-        <div className="mt-2 ">
-          <span className="text-lg font-bold text-[#F05656]">
+      <div className="p-2 ">
+        <span className="text-[12px] font-bold text-[#3F3F3F]">
+          ID : {product.id}
+        </span>
+        <h3 className="font-bold text-[14px] truncate">{product.name}</h3>
+        <div className="mt-1 ">
+          <span className="text-[12px] font-bold text-[#F05656]">
             {product.priceUsd}
           </span>
-          <span className="text-sm text-[#F05656] ml-2">
+          <span className="text-[12px] font-bold text-[#F05656] ml-1">
             {product.priceKhr}
           </span>
         </div>

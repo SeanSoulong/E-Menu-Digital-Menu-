@@ -30,8 +30,8 @@ export default function Filters({
   };
 
   return (
-    <div className="w-full lg:w-1/4 p-6 border-b lg:border-r lg:border-b-0 border-[#3F3F3F]">
-      <div className="flex items-center mb-6">
+    <div className="w-full lg:w-1/4 p-2 lg:p-6 border-b lg:border-r lg:border-b-0 border-[#3F3F3F]">
+      <div className="flex items-center mb-2 lg:mb-6">
         <Image
           src="/images/logo_emoji.png"
           alt="Logo"

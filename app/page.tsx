@@ -61,7 +61,7 @@ export default function HomePage() {
           activeCategory={activeCategory}
         />
         <div className="flex-1 bg-white">
-          <h1 className="text-[20px] font-bold p-6">Product Catalog</h1>
+          <h1 className="text-[20px] font-bold p-2 lg:p-6">Product Catalog</h1>
           <ProductGrid
             products={filteredProducts}
             onProductClick={handleProductClick}
