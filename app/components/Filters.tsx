@@ -1,10 +1,13 @@
 "use client";
+
 import Image from "next/image";
 import { useState } from "react";
 import { FaSearch, FaTimes } from "react-icons/fa";
+import { useLanguage } from "../context/LanguageContext";
+import LanguageSwitcher from "./LanguageSwitcher";
 
 interface FiltersProps {
-  categories: string[];
+  categories: { en: string; kh: string }[]; // now each category has en & kh
   activeCategory: string;
   onSearch: (query: string) => void;
   onFilter: (category: string) => void;
@@ -16,6 +19,7 @@ export default function Filters({
   onSearch,
   onFilter,
 }: FiltersProps) {
+  const { language } = useLanguage();
   const [searchQuery, setSearchQuery] = useState("");
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -30,18 +34,23 @@ export default function Filters({
   };
 
   return (
-    <div className="w-full lg:w-1/4 p-2 lg:p-6 border-b lg:border-r lg:border-b-0 border-[#3F3F3F]">
-      <div className="flex items-center mb-2 lg:mb-6">
-        <Image
-          src="/images/logo_emoji.png"
-          alt="Logo"
-          width={60}
-          height={70}
-          className="cursor-pointer"
-        />
-        <p className="text-[20px] font-bold text-[#212121]">
-          Emoji Online Shop
-        </p>
+    <div className="w-full lg:w-1/4 p-2 border-b lg:border-r lg:border-b-0 border-[#3F3F3F]">
+      <div className="flex items-center mb-2 lg:mb-6 w-full justify-between">
+        <div className="flex items-center">
+          <Image
+            src="/images/logo_emoji.png"
+            alt="Logo"
+            width={60}
+            height={70}
+            className="cursor-pointer"
+          />
+          <p className="text-[20px] font-bold text-[#212121] ">
+            Emoji Online Shop
+          </p>
+        </div>
+        <div className="flex items-end justify-end">
+          <LanguageSwitcher />
+        </div>
       </div>
 
       {/* Search Bar */}
@@ -50,7 +59,9 @@ export default function Filters({
           <FaSearch className="absolute left-4 text-[#3F3F3F]" />
           <input
             type="text"
-            placeholder="Search products..."
+            placeholder={
+              language === "en" ? "Search products..." : "ស្វែងរកផលិតផល..."
+            }
             value={searchQuery}
             onChange={handleInputChange}
             className="w-full pl-10 pr-10 py-2 border rounded-full focus:outline-none focus:ring-1 focus:ring-[#3F3F3F]"
@@ -69,7 +80,7 @@ export default function Filters({
 
       {/* Categories */}
       <h3 className="text-xl font-semibold mb-4 text-[#3F3F3F] hidden lg:block">
-        Categories
+        {language === "en" ? "Categories" : "ប្រភេទ"}
       </h3>
 
       {/* Desktop List */}
@@ -83,20 +94,20 @@ export default function Filters({
                 : "text-gray-700 hover:bg-gray-100"
             }`}
           >
-            All Products
+            {language === "en" ? "All Products" : "ផលិតផលទាំងអស់"}
           </button>
         </li>
-        {categories.map((category) => (
-          <li key={category}>
+        {categories.map((cat) => (
+          <li key={cat.en}>
             <button
-              onClick={() => onFilter(category)}
+              onClick={() => onFilter(cat.en)}
               className={`block w-full text-left px-4 py-2 rounded-md transition-colors ${
-                activeCategory === category
+                activeCategory === cat.en
                   ? "bg-[#3F3F3F] text-white font-semibold"
                   : "text-gray-700 hover:bg-gray-100"
               }`}
             >
-              {category}
+              {language === "en" ? cat.en : cat.kh}
             </button>
           </li>
         ))}
@@ -112,19 +123,19 @@ export default function Filters({
               : "border-gray-300 text-gray-700 hover:bg-gray-100"
           }`}
         >
-          All
+          {language === "en" ? "All" : "ទាំងអស់"}
         </button>
-        {categories.map((category) => (
+        {categories.map((cat) => (
           <button
-            key={category}
-            onClick={() => onFilter(category)}
+            key={cat.en}
+            onClick={() => onFilter(cat.en)}
             className={`px-4 py-2 border rounded-full whitespace-nowrap transition-colors ${
-              activeCategory === category
+              activeCategory === cat.en
                 ? "bg-[#3F3F3F] text-white font-semibold"
                 : "border-gray-300 text-gray-700 hover:bg-gray-100"
             }`}
           >
-            {category}
+            {language === "en" ? cat.en : cat.kh}
           </button>
         ))}
       </div>

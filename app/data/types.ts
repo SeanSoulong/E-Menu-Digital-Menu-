@@ -1,10 +1,10 @@
 export interface Product {
   id: string;
-  name: string;
-  image: string; // main image (cover)
-  images?: string[]; // gallery images (optional)
-  category: string;
-  description: string;
+  name: { en: string; kh: string };
+  image: string; // main image
+  images?: string[]; // gallery images
+  category: { en: string; kh: string };
+  description: { en: string; kh: string };
   keywords: string[];
   priceUsd: string;
   priceKhr: string;
