@@ -7,7 +7,6 @@ import CategoryManager from "./CategoryManager";
 import { useLanguage } from "../context/LanguageContext";
 import { useAuth } from "../context/AuthContext";
 import LanguageSwitcher from "./LanguageSwitcher";
-import Image from "next/image";
 import Link from "next/link";
 
 export default function AdminDashboard() {
@@ -513,7 +512,7 @@ export default function AdminDashboard() {
                                 item.images
                                   .slice(0, 3)
                                   .map((image, index) => (
-                                    <Image
+                                    <img
                                       key={index}
                                       src={image}
                                       alt={`${
