@@ -1,5 +1,4 @@
 "use client";
-
 import { Product } from "../data/types";
 import Image from "next/image";
 import {
@@ -9,7 +8,6 @@ import {
   FaMapMarkerAlt,
   FaPhoneAlt,
 } from "react-icons/fa";
-
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/pagination";
@@ -29,26 +27,25 @@ export default function ProductDetailPopup({
 
   if (!product) return null;
 
-  // URLs for social/contact links
-  const facebookUrl = "https://www.facebook.com/Limsakhna";
+  const facebookUrl = "https://www.facebook.com/profile.php?id=100004264842600";
   const telegramUrl = "https://t.me/sothimaktey";
   const mapUrl = "https://maps.app.goo.gl/9xi5jv778zCMV5gs8";
   const phoneUrl = `tel:${product.contact || "098253453"}`;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center p-4 z-50 bg-black/30">
-      <div className="bg-white rounded-lg shadow-xl p-10 max-w-3xl w-full max-h-[90vh] overflow-y-auto relative">
+    <div className="fixed inset-0 flex items-center justify-center p-4 z-50 bg-black/50 backdrop-blur-sm font-[Kantumruy_Pro]">
+      <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto relative">
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-600 hover:text-gray-900"
+          className="absolute top-4 right-4 z-10 bg-white hover:bg-gray-100 text-gray-600 hover:text-gray-900 p-2 rounded-xl transition-all duration-200 transform hover:scale-110 shadow-lg"
         >
-          <FaTimes size={24} />
+          <FaTimes size={20} />
         </button>
 
-        <div className="flex flex-col md:flex-row gap-6">
+        <div className="flex flex-col lg:flex-row gap-6">
           {/* Product Image Carousel */}
-          <div className="md:w-1/2 flex justify-center relative">
+          <div className="lg:w-1/2 flex justify-center relative">
             <Swiper
               modules={[Pagination, A11y]}
               spaceBetween={50}
@@ -72,61 +69,77 @@ export default function ProductDetailPopup({
           </div>
 
           {/* Product Details */}
-          <div className="md:w-1/2 flex flex-col justify-start">
-            <div className="mb-4">
-              <p className="text-gray-500 mb-2">
-                {language === "en" ? "ID" : "លេខសម្គាល់"}: {product.id}
-              </p>
-              <h2 className="text-2xl md:text-3xl font-bold mb-2">
+          <div className="lg:w-1/2 flex flex-col justify-start">
+            <div className="mb-6">
+              {/* <div className="bg-gradient-to-r from-[#3F3F3F] to-[#2F2F2F] text-white px-3 py-1 rounded-lg text-sm font-bold inline-block mb-3">
+                ID: {product.id}
+              </div> */}
+              <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-3 leading-tight">
                 {product.name[language]}
               </h2>
-              <ul className="text-gray-700 list-none p-0 space-y-1">
+              <div className="text-gray-700 leading-relaxed space-y-2 mb-4">
                 {product.description[language]
                   .split("\n")
                   .map((line, index) => (
-                    <li key={index}>{line}</li>
+                    <p key={index} className="text-base">
+                      {line}
+                    </p>
                   ))}
-              </ul>
-              <div className="flex items-end mb-2 text-[#F05656]">
-                <span className="text-xl md:text-2xl font-bold">
+              </div>
+              <div className="flex items-end gap-3 mb-6">
+                <span className="text-2xl lg:text-3xl font-bold text-[#F05656]">
                   {product.priceUsd}
                 </span>
-                <span className="text-base ml-2">{product.priceKhr}</span>
+                <span className="text-lg text-gray-600 font-semibold">
+                  {product.priceKhr}
+                </span>
               </div>
             </div>
 
             {/* Contact / Social */}
-            <div className="flex items-center gap-4 mt-auto pt-4">
-              <a
-                href={facebookUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Facebook Page"
-              >
-                <FaFacebookF className="text-blue-600 cursor-pointer hover:opacity-80" />
-              </a>
-              <a
-                href={telegramUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Telegram Account"
-              >
-                <FaTelegramPlane className="text-blue-400 cursor-pointer hover:opacity-80" />
-              </a>
-              <a
-                href={mapUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Find on Map"
-              >
-                <FaMapMarkerAlt className="text-green-600 cursor-pointer hover:opacity-80" />
-              </a>
-              <a href={phoneUrl} aria-label="Call Us">
-                <div className="flex items-center">
-                  <FaPhoneAlt className="text-red-600 cursor-pointer hover:opacity-80" />
-                  <span className="ml-2 text-gray-700">{product.contact}</span>
-                </div>
-              </a>
+            <div className="mt-auto pt-6 border-t border-gray-200">
+              <p className="text-sm font-semibold text-gray-700 mb-4">
+                {language === "en" ? "Contact us:" : "ទំនាក់ទំនងពួកយើង៖"}
+              </p>
+              <div className="flex items-center gap-4">
+                <a
+                  href={facebookUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-blue-600 text-white p-3 rounded-xl hover:bg-blue-700 transition-all duration-200 transform hover:scale-110 shadow-lg"
+                  aria-label="Facebook Page"
+                >
+                  <FaFacebookF size={18} />
+                </a>
+                <a
+                  href={telegramUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-blue-400 text-white p-3 rounded-xl hover:bg-blue-500 transition-all duration-200 transform hover:scale-110 shadow-lg"
+                  aria-label="Telegram Account"
+                >
+                  <FaTelegramPlane size={18} />
+                </a>
+                <a
+                  href={mapUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-green-600 text-white p-3 rounded-xl hover:bg-green-700 transition-all duration-200 transform hover:scale-110 shadow-lg"
+                  aria-label="Find on Map"
+                >
+                  <FaMapMarkerAlt size={18} />
+                </a>
+                <a
+                  href={phoneUrl}
+                  className="bg-red-600 text-white p-3 rounded-xl hover:bg-red-700 transition-all duration-200 transform hover:scale-110 shadow-lg flex items-center gap-2"
+                  aria-label="Call Us"
+                >
+                  <FaPhoneAlt size={16} />
+                  <span className="text-sm font-semibold">
+                    {product.contact}
+                  </span>
+                </a>
+              </div>
             </div>
           </div>
         </div>

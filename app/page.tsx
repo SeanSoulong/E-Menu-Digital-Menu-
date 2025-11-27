@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
-import { products } from "./data/products";
-import { Product } from "./data/types";
+import { createClient } from "../lib/supabase-client";
+import { Product, MenuItem, Category } from "./data/types";
 import Filters from "./components/Filters";
 import ProductGrid from "./components/ProductGrid";
 import ProductDetailPopup from "./components/ProductDetailPopup";
@@ -13,6 +13,112 @@ export default function HomePage() {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const supabase = createClient();
+
+  useEffect(() => {
+    fetchMenuData();
+
+    const subscription = supabase
+      .channel("menu_items_changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "menu_items" },
+        () => {
+          fetchMenuData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const fetchMenuData = async () => {
+    try {
+      console.log("Fetching menu data...");
+      const [itemsResponse, categoriesResponse] = await Promise.all([
+        supabase
+          .from("menu_items")
+          .select(
+            `
+            *,
+            categories (name_en, name_kh)
+          `
+          )
+          .eq("is_available", true)
+          .order("created_at", { ascending: false }),
+        supabase.from("categories").select("*").order("name_en"),
+      ]);
+
+      if (itemsResponse.error) {
+        console.error("Items error:", itemsResponse.error);
+        throw itemsResponse.error;
+      }
+      if (categoriesResponse.error) {
+        console.error("Categories error:", categoriesResponse.error);
+        throw categoriesResponse.error;
+      }
+
+      console.log("Fetched items:", itemsResponse.data?.length);
+      console.log("Fetched categories:", categoriesResponse.data?.length);
+
+      setMenuItems(itemsResponse.data || []);
+      setCategories(categoriesResponse.data || []);
+    } catch (error) {
+      console.error("Error fetching menu data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filterCategories = categories.map((cat) => ({
+    en: cat.name_en,
+    kh: cat.name_kh,
+  }));
+
+  const filteredProducts = menuItems.filter((item) => {
+    const categoryMatch =
+      activeCategory === "All" || item.categories?.name_en === activeCategory;
+
+    const name = language === "en" ? item.name_en : item.name_kh;
+    const description =
+      language === "en" ? item.description_en : item.description_kh;
+
+    const queryMatch =
+      !searchQuery ||
+      name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.name_en.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.name_kh.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      description.toLowerCase().includes(searchQuery.toLowerCase());
+
+    return categoryMatch && queryMatch;
+  });
+
+  const convertToProduct = (item: MenuItem): Product => ({
+    id: item.id,
+    name: { en: item.name_en, kh: item.name_kh },
+    image: item.image_url || "/images/default-food.jpg",
+    images:
+      item.images && item.images.length > 0
+        ? item.images
+        : [item.image_url || "/images/default-food.jpg"],
+    category: {
+      en: item.categories?.name_en || "Uncategorized",
+      kh: item.categories?.name_kh || "មិនបានចាត់ថ្នាក់",
+    },
+    description: {
+      en: item.description_en,
+      kh: item.description_kh,
+    },
+    keywords: [],
+    priceUsd: `$${item.price.toFixed(2)}`,
+    priceKhr: `៛${(item.price * 4100).toLocaleString()}`,
+    contact: "098253453",
+  });
 
   // Prevent background scrolling when popup is open
   useEffect(() => {
@@ -27,19 +133,15 @@ export default function HomePage() {
     };
   }, [isPopupOpen]);
 
-  // Deduplicate categories
-  const categories = Array.from(
-    new Map(products.map((p) => [p.category.en, p.category])).values()
-  );
-
-  const filteredProducts = products.filter((p) => {
-    const categoryMatch =
-      activeCategory === "All" || p.category.en === activeCategory;
-    const queryMatch =
-      !searchQuery ||
-      p.name[language].toLowerCase().includes(searchQuery.toLowerCase());
-    return categoryMatch && queryMatch;
-  });
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-lg">
+          {language === "en" ? "Loading menu..." : "កំពុងផ្ទុកមីនុយ..."}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white p-4">
@@ -49,20 +151,29 @@ export default function HomePage() {
         }`}
       >
         <Filters
-          categories={categories}
+          categories={filterCategories}
           activeCategory={activeCategory}
           onFilter={setActiveCategory}
           onSearch={setSearchQuery}
         />
 
         <div className="flex-1 lg:ml-6 mt-6">
-          <h1 className="text-xl font-bold mb-4">
-            {language === "en" ? "Product Catalog" : "បញ្ជីផលិតផល"}
-          </h1>
+          <div className="flex justify-between items-center p-4">
+            <h1 className="text-xl font-bold">
+              {language === "en" ? "Menu" : "មីនុយ"}
+            </h1>
+            <div className="text-sm text-gray-600">
+              {language === "en"
+                ? `${filteredProducts.length} items found`
+                : `បានរកឃើញ ${filteredProducts.length} ធាតុ`}
+            </div>
+          </div>
+
           <ProductGrid
-            products={filteredProducts}
+            products={filteredProducts.map(convertToProduct)}
             onProductClick={(p) => {
-              setSelectedProduct(p);
+              const originalItem = menuItems.find((item) => item.id === p.id);
+              setSelectedProduct(convertToProduct(originalItem!));
               setIsPopupOpen(true);
             }}
           />
