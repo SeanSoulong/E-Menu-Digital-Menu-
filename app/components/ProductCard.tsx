@@ -20,8 +20,10 @@ export default function ProductCard({ product, onClick }: Props) {
         alt={product.name[language]}
         width={300}
         height={300}
+        unoptimized
         className="w-full h-48 object-cover"
       />
+
       <div className="p-2">
         <span className="text-[12px] font-bold text-[#3F3F3F]">
           ID: {product.id}

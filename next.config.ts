@@ -1,3 +1,4 @@
+// next.config.js
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -5,7 +6,11 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "scontent.fpnh5-*.fna.fbcdn.net",
+        hostname: "scontent.fpnh5-2.fna.fbcdn.net", // adjust per CDN
+      },
+      {
+        protocol: "https",
+        hostname: "scontent.fpnh5-1.fna.fbcdn.net",
       },
       {
         protocol: "https",

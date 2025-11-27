@@ -63,6 +63,7 @@ export default function ProductDetailPopup({
                     alt={product.name[language]}
                     width={400}
                     height={400}
+                    unoptimized
                     className="rounded-lg object-contain max-h-96 border"
                   />
                 </SwiperSlide>
