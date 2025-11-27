@@ -298,7 +298,7 @@ export default function AdminDashboard() {
                     >
                       <div className="flex items-start gap-3 mb-3">
                         {item.image_url && (
-                          <Image
+                          <img
                             src={item.image_url}
                             alt={
                               language === "en" ? item.name_en : item.name_kh
@@ -355,7 +355,7 @@ export default function AdminDashboard() {
                             item.images
                               .slice(0, screenSize === "mobile" ? 2 : 3)
                               .map((image, index) => (
-                                <Image
+                                <img
                                   key={index}
                                   src={image}
                                   alt={`${
@@ -469,7 +469,7 @@ export default function AdminDashboard() {
                           <td className="px-4 md:px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
                               {item.image_url && (
-                                <Image
+                                <img
                                   src={item.image_url}
                                   alt={
                                     language === "en"
@@ -533,7 +533,7 @@ export default function AdminDashboard() {
                               )}
                               {(!item.images || item.images.length === 0) &&
                                 item.image_url && (
-                                  <Image
+                                  <img
                                     src={item.image_url}
                                     alt={
                                       language === "en"
