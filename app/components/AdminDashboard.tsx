@@ -438,10 +438,10 @@ export default function AdminDashboard() {
                       {language === "en" ? "All Status" : "ស្ថានភាពទាំងអស់"}
                     </option>
                     <option value="available">
-                      {language === "en" ? "Available" : "អាចរកបាន"}
+                      {language === "en" ? "InStock" : "មានក្នុងស្តុក"}
                     </option>
                     <option value="unavailable">
-                      {language === "en" ? "Unavailable" : "មិនអាចរកបាន"}
+                      {language === "en" ? "OutStock" : "អស់ស្តុក"}
                     </option>
                   </select>
 
