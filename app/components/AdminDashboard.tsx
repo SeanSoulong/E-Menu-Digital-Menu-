@@ -29,6 +29,10 @@ export default function AdminDashboard() {
   const [sortBy, setSortBy] = useState<"name" | "price" | "date">("date");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
   const supabase = createClient();
 
   const fetchData = useCallback(async () => {
@@ -64,10 +68,13 @@ export default function AdminDashboard() {
       const width = window.innerWidth;
       if (width < 768) {
         setScreenSize("mobile");
+        setItemsPerPage(5); // Fewer items on mobile
       } else if (width >= 768 && width < 1024) {
         setScreenSize("tablet");
+        setItemsPerPage(8); // Medium items on tablet
       } else {
         setScreenSize("desktop");
+        setItemsPerPage(10); // More items on desktop
       }
     };
 
@@ -142,6 +149,18 @@ export default function AdminDashboard() {
     }
   });
 
+  // Pagination logic
+  const totalItems = sortedItems.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentItems = sortedItems.slice(startIndex, endIndex);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedCategory, statusFilter, sortBy, sortOrder]);
+
   const handleDelete = async (id: string) => {
     if (
       !confirm(
@@ -206,6 +225,49 @@ export default function AdminDashboard() {
     setStatusFilter("all");
     setSortBy("date");
     setSortOrder("desc");
+    setCurrentPage(1);
+  };
+
+  // Pagination controls
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+    // Scroll to top of the items list
+    const itemsContainer = document.getElementById("items-container");
+    if (itemsContainer) {
+      itemsContainer.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  const nextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const prevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  // Generate page numbers for pagination
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    // Adjust start page if we're near the end
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+
+    return pages;
   };
 
   if (loading) {
@@ -381,7 +443,7 @@ export default function AdminDashboard() {
                         }
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 px-3 py-2 border border-gray-300 rounded-lg  focus:border-transparen    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white placeholder-gray-400 text-sm sm:text-base"
+                        className="w-full pl-10 px-3 py-2 border border-gray-300 rounded-lg  focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white placeholder-gray-400 text-sm sm:text-base"
                       />
                       {searchTerm && (
                         <button
@@ -499,302 +561,150 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              {/* Mobile & Tablet Card View */}
-              {(screenSize === "mobile" || screenSize === "tablet") && (
-                <div className="divide-y divide-gray-200">
-                  {sortedItems.map((item) => (
-                    <div
-                      key={item.id}
-                      className={`p-4 hover:bg-gray-50 transition-colors duration-200 ${
-                        editingItem?.id === item.id
-                          ? "bg-blue-50 border-l-4 border-l-blue-500"
-                          : ""
-                      }`}
-                    >
-                      <div className="flex items-start gap-3 mb-3">
-                        {item.image_url && (
-                          <img
-                            src={item.image_url}
-                            alt={
-                              language === "en" ? item.name_en : item.name_kh
-                            }
-                            width={64}
-                            height={64}
-                            className="h-16 w-16 rounded-xl object-cover border border-gray-200 flex-shrink-0"
-                          />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between mb-1">
-                            <h3 className="text-sm font-semibold text-gray-900 truncate">
-                              {language === "en" ? item.name_en : item.name_kh}
-                            </h3>
-                            <div className="text-sm font-bold text-gray-900 ml-2 flex-shrink-0">
-                              ${item.price.toFixed(2)}
-                            </div>
-                          </div>
-                          <p className="text-xs text-gray-500 line-clamp-2 mb-2">
-                            {language === "en"
-                              ? item.description_en
-                              : item.description_kh}
-                          </p>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                              {language === "en"
-                                ? item.categories?.name_en
-                                : item.categories?.name_kh}
-                            </span>
-                            <button
-                              onClick={() => handleToggleAvailability(item)}
-                              className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold transition-all duration-200 ${
-                                item.is_available
-                                  ? "bg-gradient-to-br from-green-500 to-green-600 text-white"
-                                  : "bg-gradient-to-br from-red-500 to-red-600 text-white"
-                              }`}
-                            >
-                              {item.is_available
-                                ? language === "en"
-                                  ? "InStock"
-                                  : "មានក្នុងស្តុក"
-                                : language === "en"
-                                ? "OutStock"
-                                : "អស់ស្តុក"}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between mt-3">
-                        {/* Images */}
-                        <div className="flex -space-x-2">
-                          {item.images &&
-                            item.images
-                              .slice(0, screenSize === "mobile" ? 2 : 3)
-                              .map((image, index) => (
-                                <img
-                                  key={index}
-                                  src={image}
-                                  alt={`${
-                                    language === "en"
-                                      ? item.name_en
-                                      : item.name_kh
-                                  } ${index + 1}`}
-                                  width={32}
-                                  height={32}
-                                  className="h-8 w-8 rounded-lg border-2 border-white object-cover shadow-sm"
-                                />
-                              ))}
-                          {item.images &&
-                            item.images.length >
-                              (screenSize === "mobile" ? 2 : 3) && (
-                              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-gray-400 to-gray-600 border-2 border-white flex items-center justify-center text-xs font-medium text-white shadow-sm">
-                                +
-                                {item.images.length -
-                                  (screenSize === "mobile" ? 2 : 3)}
-                              </div>
-                            )}
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => setEditingItem(item)}
-                            className={`text-blue-600 hover:text-blue-800 transition-colors duration-200 p-2 rounded-lg ${
-                              editingItem?.id === item.id
-                                ? "bg-blue-100"
-                                : "bg-blue-50"
-                            }`}
-                            title={language === "en" ? "Edit" : "កែសម្រួល"}
-                          >
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                              />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() => handleDelete(item.id)}
-                            className="text-red-600 hover:text-red-800 transition-colors duration-200 p-2 bg-red-50 rounded-lg"
-                            title={language === "en" ? "Delete" : "លុប"}
-                          >
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                              />
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+              {/* Items Per Page Selector */}
+              <div className="px-4 md:px-6 py-3 border-b border-gray-100 bg-gray-50 flex flex-col sm:flex-row justify-between items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-600">
+                    {language === "en"
+                      ? "Items per page:"
+                      : "ធាតុក្នុងមួយទំព័រ:"}
+                  </span>
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => {
+                      setItemsPerPage(Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
+                    className="text-xs border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value={5}>5</option>
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                  </select>
                 </div>
-              )}
 
-              {/* Desktop Table View */}
-              {screenSize === "desktop" && (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                          {language === "en" ? "Item" : "ធាតុ"}
-                        </th>
-                        <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                          <button
-                            onClick={() => handleSort("price")}
-                            className="flex items-center gap-1 hover:text-gray-900 transition-colors"
-                          >
-                            {language === "en" ? "Price" : "តម្លៃ"}
-                            {sortBy === "price" && (
-                              <span>{sortOrder === "asc" ? "↑" : "↓"}</span>
-                            )}
-                          </button>
-                        </th>
-                        <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                          {language === "en" ? "Category" : "ប្រភេទ"}
-                        </th>
-                        <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                          {language === "en" ? "Images" : "រូបភាព"}
-                        </th>
-                        <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                          {language === "en" ? "Status" : "ស្ថានភាព"}
-                        </th>
-                        <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                          {language === "en" ? "Actions" : "សកម្មភាព"}
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {sortedItems.map((item) => (
-                        <tr
-                          key={item.id}
-                          className={`hover:bg-gray-50 transition-colors duration-200 ${
-                            editingItem?.id === item.id
-                              ? "bg-blue-50 border-l-4 border-l-blue-500"
-                              : ""
-                          }`}
-                        >
-                          <td className="px-4 md:px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              {item.image_url && (
-                                <img
-                                  src={item.image_url}
-                                  alt={
-                                    language === "en"
-                                      ? item.name_en
-                                      : item.name_kh
-                                  }
-                                  width={48}
-                                  height={48}
-                                  className="h-10 md:h-12 w-10 md:w-12 rounded-xl object-cover mr-3 md:mr-4 border border-gray-200"
-                                />
-                              )}
-                              <div className="min-w-0">
-                                <div className="text-sm font-semibold text-gray-900 truncate max-w-[200px]">
-                                  {language === "en"
-                                    ? item.name_en
-                                    : item.name_kh}
-                                </div>
-                                <div className="text-sm text-gray-500 line-clamp-2 max-w-[200px]">
-                                  {language === "en"
-                                    ? item.description_en
-                                    : item.description_kh}
-                                </div>
+                {/* Pagination Info */}
+                <div className="text-xs text-gray-600">
+                  {language === "en" ? "Showing" : "កំពុងបង្ហាញ"}{" "}
+                  {startIndex + 1}-{Math.min(endIndex, totalItems)}{" "}
+                  {language === "en" ? "of" : "នៃ"} {totalItems}{" "}
+                  {language === "en" ? "items" : "ធាតុ"}
+                </div>
+              </div>
+
+              {/* Items Container with ID for scrolling */}
+              <div id="items-container">
+                {/* Mobile & Tablet Card View */}
+                {(screenSize === "mobile" || screenSize === "tablet") && (
+                  <div className="divide-y divide-gray-200">
+                    {currentItems.map((item) => (
+                      <div
+                        key={item.id}
+                        className={`p-4 hover:bg-gray-50 transition-colors duration-200 ${
+                          editingItem?.id === item.id
+                            ? "bg-blue-50 border-l-4 border-l-blue-500"
+                            : ""
+                        }`}
+                      >
+                        <div className="flex items-start gap-3 mb-3">
+                          {item.image_url && (
+                            <img
+                              src={item.image_url}
+                              alt={
+                                language === "en" ? item.name_en : item.name_kh
+                              }
+                              width={64}
+                              height={64}
+                              className="h-16 w-16 rounded-xl object-cover border border-gray-200 flex-shrink-0"
+                            />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between mb-1">
+                              <h3 className="text-sm font-semibold text-gray-900 truncate">
+                                {language === "en"
+                                  ? item.name_en
+                                  : item.name_kh}
+                              </h3>
+                              <div className="text-sm font-bold text-gray-900 ml-2 flex-shrink-0">
+                                ${item.price.toFixed(2)}
                               </div>
                             </div>
-                          </td>
-                          <td className="px-4 md:px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-bold text-gray-900">
-                              ${item.price.toFixed(2)}
-                            </div>
-                          </td>
-                          <td className="px-4 md:px-6 py-4 whitespace-nowrap">
-                            <span className="inline-flex items-center px-2 md:px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            <p className="text-xs text-gray-500 line-clamp-2 mb-2">
                               {language === "en"
-                                ? item.categories?.name_en
-                                : item.categories?.name_kh}
-                            </span>
-                          </td>
-                          <td className="px-4 md:px-6 py-4 whitespace-nowrap">
-                            <div className="flex -space-x-1 md:-space-x-2">
-                              {item.images &&
-                                item.images
-                                  .slice(0, 3)
-                                  .map((image, index) => (
-                                    <img
-                                      key={index}
-                                      src={image}
-                                      alt={`${
-                                        language === "en"
-                                          ? item.name_en
-                                          : item.name_kh
-                                      } ${index + 1}`}
-                                      width={32}
-                                      height={32}
-                                      className="h-8 w-8 md:h-10 md:w-10 rounded-xl border-2 border-white object-cover shadow-sm"
-                                    />
-                                  ))}
-                              {item.images && item.images.length > 3 && (
-                                <div className="h-8 w-8 md:h-10 md:w-10 rounded-xl bg-gradient-to-br from-gray-400 to-gray-600 border-2 border-white flex items-center justify-center text-xs font-medium text-white shadow-sm">
-                                  +{item.images.length - 3}
-                                </div>
-                              )}
-                              {(!item.images || item.images.length === 0) &&
-                                item.image_url && (
+                                ? item.description_en
+                                : item.description_kh}
+                            </p>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                {language === "en"
+                                  ? item.categories?.name_en
+                                  : item.categories?.name_kh}
+                              </span>
+                              <button
+                                onClick={() => handleToggleAvailability(item)}
+                                className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold transition-all duration-200 ${
+                                  item.is_available
+                                    ? "bg-gradient-to-br from-green-500 to-green-600 text-white"
+                                    : "bg-gradient-to-br from-red-500 to-red-600 text-white"
+                                }`}
+                              >
+                                {item.is_available
+                                  ? language === "en"
+                                    ? "InStock"
+                                    : "មានក្នុងស្តុក"
+                                  : language === "en"
+                                  ? "OutStock"
+                                  : "អស់ស្តុក"}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between mt-3">
+                          {/* Images */}
+                          <div className="flex -space-x-2">
+                            {item.images &&
+                              item.images
+                                .slice(0, screenSize === "mobile" ? 2 : 3)
+                                .map((image, index) => (
                                   <img
-                                    src={item.image_url}
-                                    alt={
+                                    key={index}
+                                    src={image}
+                                    alt={`${
                                       language === "en"
                                         ? item.name_en
                                         : item.name_kh
-                                    }
+                                    } ${index + 1}`}
                                     width={32}
                                     height={32}
-                                    className="h-8 w-8 md:h-10 md:w-10 rounded-xl border-2 border-white object-cover shadow-sm"
+                                    className="h-8 w-8 rounded-lg border-2 border-white object-cover shadow-sm"
                                   />
-                                )}
-                            </div>
-                          </td>
-                          <td className="px-4 md:px-6 py-4 whitespace-nowrap">
-                            <button
-                              onClick={() => handleToggleAvailability(item)}
-                              className={`inline-flex items-center px-3 md:px-4 py-1 md:py-2 rounded-xl text-xs md:text-sm font-semibold transition-all duration-200 transform hover:scale-105 ${
-                                item.is_available
-                                  ? "bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg hover:shadow-xl"
-                                  : "bg-gradient-to-br from-red-500 to-red-600 text-white shadow-lg hover:shadow-xl"
-                              }`}
-                            >
-                              {item.is_available
-                                ? language === "en"
-                                  ? "InStock"
-                                  : "មានក្នុងស្តុក"
-                                : language === "en"
-                                ? "OutStock"
-                                : "អស់ស្តុក"}
-                            </button>
-                          </td>
-                          <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2 md:space-x-3">
+                                ))}
+                            {item.images &&
+                              item.images.length >
+                                (screenSize === "mobile" ? 2 : 3) && (
+                                <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-gray-400 to-gray-600 border-2 border-white flex items-center justify-center text-xs font-medium text-white shadow-sm">
+                                  +
+                                  {item.images.length -
+                                    (screenSize === "mobile" ? 2 : 3)}
+                                </div>
+                              )}
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex items-center gap-2">
                             <button
                               onClick={() => setEditingItem(item)}
-                              className="text-blue-600 hover:text-blue-800 font-semibold transition-colors duration-200 flex items-center gap-1 text-xs md:text-sm"
+                              className={`text-blue-600 hover:text-blue-800 transition-colors duration-200 p-2 rounded-lg ${
+                                editingItem?.id === item.id
+                                  ? "bg-blue-100"
+                                  : "bg-blue-50"
+                              }`}
+                              title={language === "en" ? "Edit" : "កែសម្រួល"}
                             >
                               <svg
-                                className="w-3 h-3 md:w-4 md:h-4"
+                                className="w-4 h-4"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -806,14 +716,14 @@ export default function AdminDashboard() {
                                   d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                                 />
                               </svg>
-                              {language === "en" ? "Edit" : "កែសម្រួល"}
                             </button>
                             <button
                               onClick={() => handleDelete(item.id)}
-                              className="text-red-600 hover:text-red-800 font-semibold transition-colors duration-200 flex items-center gap-1 text-xs md:text-sm"
+                              className="text-red-600 hover:text-red-800 transition-colors duration-200 p-2 bg-red-50 rounded-lg"
+                              title={language === "en" ? "Delete" : "លុប"}
                             >
                               <svg
-                                className="w-3 h-3 md:w-4 md:h-4"
+                                className="w-4 h-4"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -825,13 +735,297 @@ export default function AdminDashboard() {
                                   d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                                 />
                               </svg>
-                              {language === "en" ? "Delete" : "លុប"}
                             </button>
-                          </td>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Desktop Table View */}
+                {screenSize === "desktop" && (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            {language === "en" ? "Item" : "ធាតុ"}
+                          </th>
+                          <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            <button
+                              onClick={() => handleSort("price")}
+                              className="flex items-center gap-1 hover:text-gray-900 transition-colors"
+                            >
+                              {language === "en" ? "Price" : "តម្លៃ"}
+                              {sortBy === "price" && (
+                                <span>{sortOrder === "asc" ? "↑" : "↓"}</span>
+                              )}
+                            </button>
+                          </th>
+                          <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            {language === "en" ? "Category" : "ប្រភេទ"}
+                          </th>
+                          <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            {language === "en" ? "Images" : "រូបភាព"}
+                          </th>
+                          <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            {language === "en" ? "Status" : "ស្ថានភាព"}
+                          </th>
+                          <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            {language === "en" ? "Actions" : "សកម្មភាព"}
+                          </th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {currentItems.map((item) => (
+                          <tr
+                            key={item.id}
+                            className={`hover:bg-gray-50 transition-colors duration-200 ${
+                              editingItem?.id === item.id
+                                ? "bg-blue-50 border-l-4 border-l-blue-500"
+                                : ""
+                            }`}
+                          >
+                            <td className="px-4 md:px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center">
+                                {item.image_url && (
+                                  <img
+                                    src={item.image_url}
+                                    alt={
+                                      language === "en"
+                                        ? item.name_en
+                                        : item.name_kh
+                                    }
+                                    width={48}
+                                    height={48}
+                                    className="h-10 md:h-12 w-10 md:w-12 rounded-xl object-cover mr-3 md:mr-4 border border-gray-200"
+                                  />
+                                )}
+                                <div className="min-w-0">
+                                  <div className="text-sm font-semibold text-gray-900 truncate max-w-[200px]">
+                                    {language === "en"
+                                      ? item.name_en
+                                      : item.name_kh}
+                                  </div>
+                                  <div className="text-sm text-gray-500 line-clamp-2 max-w-[200px]">
+                                    {language === "en"
+                                      ? item.description_en
+                                      : item.description_kh}
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 md:px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm font-bold text-gray-900">
+                                ${item.price.toFixed(2)}
+                              </div>
+                            </td>
+                            <td className="px-4 md:px-6 py-4 whitespace-nowrap">
+                              <span className="inline-flex items-center px-2 md:px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                {language === "en"
+                                  ? item.categories?.name_en
+                                  : item.categories?.name_kh}
+                              </span>
+                            </td>
+                            <td className="px-4 md:px-6 py-4 whitespace-nowrap">
+                              <div className="flex -space-x-1 md:-space-x-2">
+                                {item.images &&
+                                  item.images
+                                    .slice(0, 3)
+                                    .map((image, index) => (
+                                      <img
+                                        key={index}
+                                        src={image}
+                                        alt={`${
+                                          language === "en"
+                                            ? item.name_en
+                                            : item.name_kh
+                                        } ${index + 1}`}
+                                        width={32}
+                                        height={32}
+                                        className="h-8 w-8 md:h-10 md:w-10 rounded-xl border-2 border-white object-cover shadow-sm"
+                                      />
+                                    ))}
+                                {item.images && item.images.length > 3 && (
+                                  <div className="h-8 w-8 md:h-10 md:w-10 rounded-xl bg-gradient-to-br from-gray-400 to-gray-600 border-2 border-white flex items-center justify-center text-xs font-medium text-white shadow-sm">
+                                    +{item.images.length - 3}
+                                  </div>
+                                )}
+                                {(!item.images || item.images.length === 0) &&
+                                  item.image_url && (
+                                    <img
+                                      src={item.image_url}
+                                      alt={
+                                        language === "en"
+                                          ? item.name_en
+                                          : item.name_kh
+                                      }
+                                      width={32}
+                                      height={32}
+                                      className="h-8 w-8 md:h-10 md:w-10 rounded-xl border-2 border-white object-cover shadow-sm"
+                                    />
+                                  )}
+                              </div>
+                            </td>
+                            <td className="px-4 md:px-6 py-4 whitespace-nowrap">
+                              <button
+                                onClick={() => handleToggleAvailability(item)}
+                                className={`inline-flex items-center px-3 md:px-4 py-1 md:py-2 rounded-xl text-xs md:text-sm font-semibold transition-all duration-200 transform hover:scale-105 ${
+                                  item.is_available
+                                    ? "bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg hover:shadow-xl"
+                                    : "bg-gradient-to-br from-red-500 to-red-600 text-white shadow-lg hover:shadow-xl"
+                                }`}
+                              >
+                                {item.is_available
+                                  ? language === "en"
+                                    ? "InStock"
+                                    : "មានក្នុងស្តុក"
+                                  : language === "en"
+                                  ? "OutStock"
+                                  : "អស់ស្តុក"}
+                              </button>
+                            </td>
+                            <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2 md:space-x-3">
+                              <button
+                                onClick={() => setEditingItem(item)}
+                                className="text-blue-600 hover:text-blue-800 font-semibold transition-colors duration-200 flex items-center gap-1 text-xs md:text-sm"
+                              >
+                                <svg
+                                  className="w-3 h-3 md:w-4 md:h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                  />
+                                </svg>
+                                {language === "en" ? "Edit" : "កែសម្រួល"}
+                              </button>
+                              <button
+                                onClick={() => handleDelete(item.id)}
+                                className="text-red-600 hover:text-red-800 font-semibold transition-colors duration-200 flex items-center gap-1 text-xs md:text-sm"
+                              >
+                                <svg
+                                  className="w-3 h-3 md:w-4 md:h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                  />
+                                </svg>
+                                {language === "en" ? "Delete" : "លុប"}
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="px-4 md:px-6 py-4 border-t border-gray-200 bg-gray-50">
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="text-sm text-gray-600">
+                      {language === "en" ? "Page" : "ទំព័រ"} {currentPage}{" "}
+                      {language === "en" ? "of" : "នៃ"} {totalPages}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {/* Previous Button */}
+                      <button
+                        onClick={prevPage}
+                        disabled={currentPage === 1}
+                        className={`px-3 py-1 text-sm rounded-lg transition-colors ${
+                          currentPage === 1
+                            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                            : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                        }`}
+                      >
+                        {language === "en" ? "Previous" : "មត្រឡប់ក្រោយ"}
+                      </button>
+
+                      {/* Page Numbers */}
+                      <div className="flex items-center gap-1">
+                        {getPageNumbers().map((page) => (
+                          <button
+                            key={page}
+                            onClick={() => goToPage(page)}
+                            className={`w-8 h-8 text-sm rounded-lg transition-colors ${
+                              currentPage === page
+                                ? "bg-blue-600 text-white"
+                                : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        ))}
+
+                        {/* Ellipsis for many pages */}
+                        {totalPages > 5 && currentPage < totalPages - 2 && (
+                          <span className="px-2 text-gray-500">...</span>
+                        )}
+
+                        {totalPages > 5 && currentPage < totalPages - 1 && (
+                          <button
+                            onClick={() => goToPage(totalPages)}
+                            className={`w-8 h-8 text-sm rounded-lg transition-colors ${
+                              currentPage === totalPages
+                                ? "bg-blue-600 text-white"
+                                : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                            }`}
+                          >
+                            {totalPages}
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Next Button */}
+                      <button
+                        onClick={nextPage}
+                        disabled={currentPage === totalPages}
+                        className={`px-3 py-1 text-sm rounded-lg transition-colors ${
+                          currentPage === totalPages
+                            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                            : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                        }`}
+                      >
+                        {language === "en" ? "Next" : "បន្ទាប់"}
+                      </button>
+                    </div>
+
+                    {/* Items Per Page Selector (Bottom) */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-600">
+                        {language === "en" ? "Show:" : "បង្ហាញ:"}
+                      </span>
+                      <select
+                        value={itemsPerPage}
+                        onChange={(e) => {
+                          setItemsPerPage(Number(e.target.value));
+                          setCurrentPage(1);
+                        }}
+                        className="text-xs border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value={5}>5</option>
+                        <option value={10}>10</option>
+                        <option value={20}>20</option>
+                        <option value={50}>50</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
               )}
 
