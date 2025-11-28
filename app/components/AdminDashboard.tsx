@@ -278,7 +278,7 @@ export default function AdminDashboard() {
             </Link>
             <button
               onClick={handleSignOut}
-              className="flex items-center justify-center gap-2 bg-gradient-to-br from-red-500 to-red-600 text-white px-3 py-2 rounded-xl hover:from-red-600 hover:to-red-700 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl font-medium text-sm md:text-base"
+              className="flex items-center justify-center gap-2 border border-red-500 bg-red-50 text-gray-700 px-3 py-2 rounded-xl font-medium text-sm md:text-base"
             >
               <svg
                 className="w-4 h-4"
@@ -410,7 +410,7 @@ export default function AdminDashboard() {
                   <select
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-lg  min-w-[140px]   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white placeholder-gray-400 text-sm sm:text-base"
+                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm min-w-[140px]"
                   >
                     <option value="all">
                       {language === "en" ? "All Categories" : "ប្រភេទទាំងអស់"}
@@ -451,7 +451,7 @@ export default function AdminDashboard() {
                     statusFilter !== "all") && (
                     <button
                       onClick={clearAllFilters}
-                      className="px-3 py-2 text-sm text-gray-600 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                      className="px-3 py-2 text-sm text-gray-600  bg-gray-200  rounded-lg transition-colors"
                     >
                       {language === "en" ? "Clear" : "លុបចោល"}
                     </button>
