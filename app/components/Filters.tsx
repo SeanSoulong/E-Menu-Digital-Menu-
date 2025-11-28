@@ -62,6 +62,7 @@ export default function Filters({
             }
             value={searchQuery}
             onChange={handleInputChange}
+            style={{ fontSize: "16px" }}
             className="w-full pl-12 pr-10 py-1.5 border-2 text-[14px] font-normal border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3F3F3F] focus:border-transparent bg-white transition-all duration-200 placeholder-gray-400"
           />
           {searchQuery && (
