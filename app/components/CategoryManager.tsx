@@ -156,7 +156,7 @@ export default function CategoryManager({
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 bg-gradient-to-br from-[#3F3F3F] to-[#2F2F2F] text-white px-5 py-3 rounded-xl hover:from-[#2F2F2F] hover:to-[#1F1F1F] transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl font-semibold"
+          className="flex items-center gap-2 bg-gradient-to-br from-[#3F3F3F] to-[#2F2F2F] text-white px-3 py-2 rounded-xl hover:from-[#2F2F2F] hover:to-[#1F1F1F] transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl font-semibold"
         >
           {showForm ? (
             <>
@@ -218,7 +218,9 @@ export default function CategoryManager({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2 pl-1">
-                {language === "en" ? "Name (English)" : "ឈ្មោះ (អង់គ្លេស)"} *
+                {language === "en"
+                  ? "Name Product  (English)"
+                  : "ឈ្មោះ ផលិតផល (អង់គ្លេស)"}
               </label>
               <input
                 type="text"
@@ -227,14 +229,17 @@ export default function CategoryManager({
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, name_en: e.target.value }))
                 }
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white placeholder-gray-400"
-                placeholder="Main Course"
+                className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white placeholder-gray-400"
+                placeholder="Enter Product"
+                style={{ fontSize: "16px" }}
               />
             </div>
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2 pl-1">
-                {language === "en" ? "Name (Khmer)" : "ឈ្មោះ (ខ្មែរ)"} *
+                {language === "en"
+                  ? "Name Product (Khmer)"
+                  : "ឈ្មោះ ផលិតផល (ខ្មែរ)"}
               </label>
               <input
                 type="text"
@@ -243,8 +248,9 @@ export default function CategoryManager({
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, name_kh: e.target.value }))
                 }
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white placeholder-gray-400"
-                placeholder="មុខម្ហូបគោក"
+                className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white placeholder-gray-400"
+                placeholder="បញ្ចូលផលិតផល"
+                style={{ fontSize: "16px" }}
               />
             </div>
           </div>
@@ -253,7 +259,7 @@ export default function CategoryManager({
             <button
               type="submit"
               disabled={loading}
-              className="flex items-center gap-2 bg-gradient-to-br from-[#3F3F3F] to-[#2F2F2F] text-white px-6 py-3 rounded-xl hover:from-[#2F2F2F] hover:to-[#1F1F1F] transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl disabled:opacity-50 font-semibold"
+              className="flex items-center gap-2 bg-gradient-to-br from-[#3F3F3F] to-[#2F2F2F] text-white px-3 py-2 rounded-xl hover:from-[#2F2F2F] hover:to-[#1F1F1F] transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl disabled:opacity-50 font-semibold"
             >
               {loading ? (
                 <>

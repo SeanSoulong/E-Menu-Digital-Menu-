@@ -15,7 +15,7 @@ export default function ProductGrid({
 
   if (products.length === 0) {
     return (
-      <div className="flex-1 flex justify-center items-center p-8 text-gray-500 text-lg flex-col font-[Kantumruy_Pro]">
+      <div className="flex-1 flex justify-center items-center p-8 text-gray-500 text-[14px] flex-col font-[Kantumruy_Pro]">
         <div className="w-24 h-24 bg-gray-100 rounded-2xl flex items-center justify-center mb-6">
           <svg
             className="w-12 h-12 text-gray-400"
@@ -44,7 +44,7 @@ export default function ProductGrid({
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-4 md:gap-6 ">
       {products.map((product) => (
         <ProductCard
           key={product.id}

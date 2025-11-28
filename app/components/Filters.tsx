@@ -40,10 +40,8 @@ export default function Filters({
             E
           </div>
           <div>
-            <p className="text-lg lg:font-xl font-bold text-gray-900">
-              Emoji-Menu
-            </p>
-            <p className="text-xs text-gray-500 w">
+            <p className="text-[16px]  font-bold text-gray-900">Emoji-Menu</p>
+            <p className="text-xs text-gray-500 font-[15px]">
               {language === "en" ? "Premium Products" : "ផលិតផលគុណភាពខ្ពស់"}
             </p>
           </div>
@@ -54,8 +52,8 @@ export default function Filters({
       </div>
 
       {/* Search Bar */}
-      <div className="mb-6">
-        <div className="relative flex items-center">
+      <div className="mb-6 ">
+        <div className="relative flex items-center ">
           <FaSearch className="absolute left-4 text-gray-400 z-10" />
           <input
             type="text"
@@ -64,7 +62,7 @@ export default function Filters({
             }
             value={searchQuery}
             onChange={handleInputChange}
-            className="w-full pl-12 pr-10 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3F3F3F] focus:border-transparent bg-white transition-all duration-200 placeholder-gray-400"
+            className="w-full pl-12 pr-10 py-1.5 border-2 text-[14px] font-normal border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3F3F3F] focus:border-transparent bg-white transition-all duration-200 placeholder-gray-400"
           />
           {searchQuery && (
             <button
@@ -80,7 +78,7 @@ export default function Filters({
 
       {/* Categories */}
       <div className="hidden lg:block">
-        <h3 className="text-lg font-bold mb-4 text-gray-900 flex items-center gap-2">
+        <h3 className="text-[18px] font-bold mb-4 text-gray-900 flex items-center gap-2">
           <svg
             className="w-5 h-5 text-[#3F3F3F]"
             fill="none"
@@ -97,7 +95,7 @@ export default function Filters({
           {language === "en" ? "Categories" : "ប្រភេទ"}
         </h3>
 
-        <ul className="space-y-2">
+        <ul className="space-y-2 text-[12px]">
           <li>
             <button
               onClick={() => onFilter("All")}
@@ -139,13 +137,13 @@ export default function Filters({
 
       {/* Mobile Pills */}
       <div className="lg:hidden">
-        <h3 className="text-lg font-bold mb-3 text-gray-900">
+        <h3 className="text-[18px] font-bold mb-3 text-gray-900">
           {language === "en" ? "Categories" : "ប្រភេទ"}
         </h3>
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide text-[12px]">
           <button
             onClick={() => onFilter("All")}
-            className={`px-4 py-2 border-2 rounded-xl whitespace-nowrap transition-all duration-200 font-semibold ${
+            className={`px-3 py-2 border-2 rounded-xl whitespace-nowrap transition-all duration-200 font-semibold ${
               activeCategory === "All"
                 ? "bg-gradient-to-r from-[#3F3F3F] to-[#2F2F2F] text-white border-transparent shadow-lg"
                 : "border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300"

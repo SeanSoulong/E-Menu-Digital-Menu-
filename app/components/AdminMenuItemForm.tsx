@@ -340,11 +340,8 @@ export default function AdminMenuItemForm({
                 multiple
                 onChange={handleMultipleImageUpload}
                 disabled={uploading || formData.images.length >= 3}
-                className="w-full text-xs sm:text-sm text-gray-500 file:mr-2 sm:file:mr-4 file:py-2 sm:file:py-3 file:px-3 sm:file:px-4
-                  file:rounded-xl file:border-0 file:text-xs sm:file:text-sm file:font-semibold
-                  file:bg-gradient-to-br file:from-indigo-500 file:to-indigo-600
-                  file:text-white hover:file:from-indigo-600 hover:file:to-indigo-700
-                  transition-all duration-200 disabled:opacity-50 cursor-pointer"
+                className="hidden"
+                style={{ fontSize: "16px" }}
               />
             </div>
           </div>
@@ -500,40 +497,42 @@ export default function AdminMenuItemForm({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1 sm:mb-2 pl-1">
-              {language === "en" ? "Name (English)" : "ឈ្មោះ (អង់គ្លេស)"}
+              {language === "en" ? "Name (English)" : "ផលិតផល (អង់គ្លេស)"}
             </label>
             <input
               type="text"
               required
+              style={{ fontSize: "16px" }}
               value={formData.name_en}
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, name_en: e.target.value }))
               }
-              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white placeholder-gray-400 text-sm sm:text-base"
+              className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white placeholder-gray-400 text-sm sm:text-base"
               placeholder={
                 language === "en"
-                  ? "Enter English name"
-                  : "បញ្ចូលឈ្មោះជាភាសាអង់គ្លេស"
+                  ? "Enter Product English"
+                  : "បញ្ចូលផលិតផលជាភាសាអង់គ្លេស"
               }
             />
           </div>
 
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1 sm:mb-2 pl-1">
-              {language === "en" ? "Name (Khmer)" : "ឈ្មោះ (ខ្មែរ)"}
+              {language === "en" ? "Product (Khmer)" : "ផលិតផល (ខ្មែរ)"}
             </label>
             <input
               type="text"
               required
+              style={{ fontSize: "16px" }}
               value={formData.name_kh}
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, name_kh: e.target.value }))
               }
-              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white placeholder-gray-400 text-sm sm:text-base"
+              className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white placeholder-gray-400 text-sm sm:text-base"
               placeholder={
                 language === "en"
-                  ? "Enter Khmer name"
-                  : "បញ្ចូលឈ្មោះជាភាសាខ្មែរ"
+                  ? "Enter Product Khmer"
+                  : "បញ្ចូលផលិតផលជាភាសាខ្មែរ"
               }
             />
           </div>
@@ -556,7 +555,7 @@ export default function AdminMenuItemForm({
                 }))
               }
               rows={isMobile ? 2 : 3}
-              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white placeholder-gray-400 resize-none text-sm sm:text-base"
+              className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white placeholder-gray-400 resize-none text-sm sm:text-base"
               placeholder={
                 language === "en"
                   ? "Enter English description"
@@ -578,7 +577,7 @@ export default function AdminMenuItemForm({
                 }))
               }
               rows={isMobile ? 2 : 3}
-              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white placeholder-gray-400 resize-none text-sm sm:text-base"
+              className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white placeholder-gray-400 resize-none text-sm sm:text-base"
               placeholder={
                 language === "en"
                   ? "Enter Khmer description"
@@ -603,11 +602,12 @@ export default function AdminMenuItemForm({
                 step="0.01"
                 min="0"
                 required
+                style={{ fontSize: "16px" }}
                 value={formData.price}
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, price: e.target.value }))
                 }
-                className="w-full pl-8 sm:pl-10 pr-3 sm:pr-4 py-2 sm:py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white placeholder-gray-400 text-sm sm:text-base"
+                className="w-full pl-8 sm:pl-10 pr-3 sm:pr-4  py-2  border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white placeholder-gray-400 text-sm sm:text-base"
                 placeholder="0.00"
               />
             </div>
@@ -626,7 +626,7 @@ export default function AdminMenuItemForm({
                   category_id: e.target.value,
                 }))
               }
-              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white appearance-none text-sm sm:text-base"
+              className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white appearance-none text-sm sm:text-base"
             >
               <option value="">
                 {language === "en" ? "Select Category" : "ជ្រើសរើសប្រភេទ"}
@@ -645,7 +645,7 @@ export default function AdminMenuItemForm({
           <button
             type="submit"
             disabled={loading || uploading}
-            className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-br from-[#3F3F3F] to-[#2F2F2F] text-white py-2.5 sm:py-3.5 px-4 sm:px-6 rounded-xl hover:from-[#2F2F2F] hover:to-[#1F1F1F] focus:outline-none focus:ring-2 focus:ring-[#3F3F3F] focus:ring-offset-2 disabled:opacity-50 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl font-semibold text-sm sm:text-base"
+            className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-br from-[#3F3F3F] to-[#2F2F2F] text-white px-3 py-2 rounded-xl hover:from-[#2F2F2F] hover:to-[#1F1F1F] focus:outline-none focus:ring-2 focus:ring-[#3F3F3F] focus:ring-offset-2 disabled:opacity-50 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl font-semibold text-sm sm:text-base"
           >
             {loading ? (
               <>

@@ -19,6 +19,16 @@ export default function AdminDashboard() {
   const [screenSize, setScreenSize] = useState<"mobile" | "tablet" | "desktop">(
     "desktop"
   );
+
+  // Search and Filter states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "available" | "unavailable"
+  >("all");
+  const [sortBy, setSortBy] = useState<"name" | "price" | "date">("date");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+
   const supabase = createClient();
 
   const fetchData = useCallback(async () => {
@@ -83,6 +93,55 @@ export default function AdminDashboard() {
     };
   }, [fetchData, supabase]);
 
+  // Filter and sort items
+  const filteredItems = menuItems.filter((item) => {
+    const matchesSearch =
+      item.name_en.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.name_kh.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.description_en?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.description_kh?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesCategory =
+      selectedCategory === "all" || item.category_id === selectedCategory;
+
+    const matchesStatus =
+      statusFilter === "all" ||
+      (statusFilter === "available" && item.is_available) ||
+      (statusFilter === "unavailable" && !item.is_available);
+
+    return matchesSearch && matchesCategory && matchesStatus;
+  });
+
+  // Sort items
+  const sortedItems = [...filteredItems].sort((a, b) => {
+    let aValue: string | number | Date;
+    let bValue: string | number | Date;
+
+    switch (sortBy) {
+      case "name":
+        aValue = language === "en" ? a.name_en : a.name_kh;
+        bValue = language === "en" ? b.name_en : b.name_kh;
+        break;
+      case "price":
+        aValue = a.price;
+        bValue = b.price;
+        break;
+      case "date":
+        aValue = new Date(a.created_at);
+        bValue = new Date(b.created_at);
+        break;
+      default:
+        aValue = new Date(a.created_at);
+        bValue = new Date(b.created_at);
+    }
+
+    if (sortOrder === "asc") {
+      return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+    } else {
+      return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+    }
+  });
+
   const handleDelete = async (id: string) => {
     if (
       !confirm(
@@ -132,12 +191,22 @@ export default function AdminDashboard() {
     await signOut();
   };
 
-  // Reset editing when screen size changes to desktop
-  useEffect(() => {
-    if (screenSize === "desktop" && editingItem) {
-      // Keep editing item but ensure form is visible
+  const handleSort = (field: "name" | "price" | "date") => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(field);
+      setSortOrder("asc");
     }
-  }, [screenSize, editingItem]);
+  };
+
+  const clearAllFilters = () => {
+    setSearchTerm("");
+    setSelectedCategory("all");
+    setStatusFilter("all");
+    setSortBy("date");
+    setSortOrder("desc");
+  };
 
   if (loading) {
     return (
@@ -184,7 +253,7 @@ export default function AdminDashboard() {
           <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
             <Link
               href="/"
-              className="flex items-center justify-center gap-2 bg-white text-gray-700 px-4 md:px-6 py-2 md:py-3 rounded-xl hover:bg-gray-50 transition-all duration-200 border border-gray-200 hover:border-gray-300 hover:shadow-md font-medium text-sm md:text-base"
+              className="flex items-center justify-center gap-2 bg-white text-gray-700 px-3 py-2 rounded-xl hover:bg-gray-50 transition-all duration-200 border border-gray-200 hover:border-gray-300 hover:shadow-md font-medium text-sm md:text-base"
             >
               <svg
                 className="w-4 h-4"
@@ -209,7 +278,7 @@ export default function AdminDashboard() {
             </Link>
             <button
               onClick={handleSignOut}
-              className="flex items-center justify-center gap-2 bg-gradient-to-br from-red-500 to-red-600 text-white px-4 md:px-6 py-2 md:py-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl font-medium text-sm md:text-base"
+              className="flex items-center justify-center gap-2 bg-gradient-to-br from-red-500 to-red-600 text-white px-3 py-2 rounded-xl hover:from-red-600 hover:to-red-700 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl font-medium text-sm md:text-base"
             >
               <svg
                 className="w-4 h-4"
@@ -252,6 +321,7 @@ export default function AdminDashboard() {
           {/* Items List - ALWAYS VISIBLE */}
           <div className="xl:col-span-3">
             <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
+              {/* Enhanced Header with Search & Filters */}
               <div className="px-4 md:px-6 py-4 md:py-5 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                   <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-2 md:mb-0">
@@ -259,7 +329,8 @@ export default function AdminDashboard() {
                   </h2>
                   <div className="flex items-center gap-3">
                     <span className="bg-[#3F3F3F] text-white px-2 md:px-3 py-1 rounded-full text-xs md:text-sm font-medium">
-                      {menuItems.length} {language === "en" ? "items" : "ធាតុ"}
+                      {filteredItems.length}/{menuItems.length}{" "}
+                      {language === "en" ? "items" : "ធាតុ"}
                     </span>
                     {editingItem && (
                       <div className="flex items-center gap-2">
@@ -281,12 +352,157 @@ export default function AdminDashboard() {
                     )}
                   </div>
                 </div>
+
+                {/* Search and Filter Bar */}
+                <div className="mt-4 flex flex-col sm:flex-row gap-3">
+                  {/* Search Input */}
+                  <div className="flex-1 min-w-0">
+                    <div className="relative">
+                      <svg
+                        className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                        />
+                      </svg>
+                      <input
+                        type="text"
+                        style={{ fontSize: "16px" }}
+                        placeholder={
+                          language === "en"
+                            ? "Search items..."
+                            : "ស្វែងរកធាតុ..."
+                        }
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-10 px-3 py-2 border border-gray-300 rounded-lg  focus:border-transparen    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white placeholder-gray-400 text-sm sm:text-base"
+                      />
+                      {searchTerm && (
+                        <button
+                          onClick={() => setSearchTerm("")}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        >
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M6 18L18 6M6 6l12 12"
+                            />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Category Filter */}
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-lg  min-w-[140px]   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white placeholder-gray-400 text-sm sm:text-base"
+                  >
+                    <option value="all">
+                      {language === "en" ? "All Categories" : "ប្រភេទទាំងអស់"}
+                    </option>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {language === "en"
+                          ? category.name_en
+                          : category.name_kh}
+                      </option>
+                    ))}
+                  </select>
+
+                  {/* Status Filter */}
+                  <select
+                    value={statusFilter}
+                    onChange={(e) =>
+                      setStatusFilter(
+                        e.target.value as "all" | "available" | "unavailable"
+                      )
+                    }
+                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm min-w-[140px]"
+                  >
+                    <option value="all">
+                      {language === "en" ? "All Status" : "ស្ថានភាពទាំងអស់"}
+                    </option>
+                    <option value="available">
+                      {language === "en" ? "Available" : "អាចរកបាន"}
+                    </option>
+                    <option value="unavailable">
+                      {language === "en" ? "Unavailable" : "មិនអាចរកបាន"}
+                    </option>
+                  </select>
+
+                  {/* Clear Filters */}
+                  {(searchTerm ||
+                    selectedCategory !== "all" ||
+                    statusFilter !== "all") && (
+                    <button
+                      onClick={clearAllFilters}
+                      className="px-3 py-2 text-sm text-gray-600 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                    >
+                      {language === "en" ? "Clear" : "លុបចោល"}
+                    </button>
+                  )}
+                </div>
+
+                {/* Sort Options */}
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <span className="text-xs text-gray-500 font-medium">
+                    {language === "en" ? "Sort by:" : "តម្រៀបតាម:"}
+                  </span>
+                  <button
+                    onClick={() => handleSort("name")}
+                    className={`px-2 py-1 text-xs rounded-lg transition-colors ${
+                      sortBy === "name"
+                        ? "bg-blue-100 text-blue-700 font-semibold"
+                        : "text-gray-600 hover:text-gray-800 bg-gray-100"
+                    }`}
+                  >
+                    {language === "en" ? "Name" : "ឈ្មោះ"}{" "}
+                    {sortBy === "name" && (sortOrder === "asc" ? "↑" : "↓")}
+                  </button>
+                  <button
+                    onClick={() => handleSort("price")}
+                    className={`px-2 py-1 text-xs rounded-lg transition-colors ${
+                      sortBy === "price"
+                        ? "bg-blue-100 text-blue-700 font-semibold"
+                        : "text-gray-600 hover:text-gray-800 bg-gray-100"
+                    }`}
+                  >
+                    {language === "en" ? "Price" : "តម្លៃ"}{" "}
+                    {sortBy === "price" && (sortOrder === "asc" ? "↑" : "↓")}
+                  </button>
+                  <button
+                    onClick={() => handleSort("date")}
+                    className={`px-2 py-1 text-xs rounded-lg transition-colors ${
+                      sortBy === "date"
+                        ? "bg-blue-100 text-blue-700 font-semibold"
+                        : "text-gray-600 hover:text-gray-800 bg-gray-100"
+                    }`}
+                  >
+                    {language === "en" ? "Date" : "កាលបរិច្ឆេទ"}{" "}
+                    {sortBy === "date" && (sortOrder === "asc" ? "↑" : "↓")}
+                  </button>
+                </div>
               </div>
 
               {/* Mobile & Tablet Card View */}
               {(screenSize === "mobile" || screenSize === "tablet") && (
                 <div className="divide-y divide-gray-200">
-                  {menuItems.map((item) => (
+                  {sortedItems.map((item) => (
                     <div
                       key={item.id}
                       className={`p-4 hover:bg-gray-50 transition-colors duration-200 ${
@@ -337,11 +553,11 @@ export default function AdminDashboard() {
                             >
                               {item.is_available
                                 ? language === "en"
-                                  ? "Available"
-                                  : "អាចរកបាន"
+                                  ? "InStock"
+                                  : "មានក្នុងស្តុក"
                                 : language === "en"
-                                ? "Unavailable"
-                                : "មិនអាចរកបាន"}
+                                ? "OutStock"
+                                : "អស់ស្តុក"}
                             </button>
                           </div>
                         </div>
@@ -439,7 +655,15 @@ export default function AdminDashboard() {
                           {language === "en" ? "Item" : "ធាតុ"}
                         </th>
                         <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                          {language === "en" ? "Price" : "តម្លៃ"}
+                          <button
+                            onClick={() => handleSort("price")}
+                            className="flex items-center gap-1 hover:text-gray-900 transition-colors"
+                          >
+                            {language === "en" ? "Price" : "តម្លៃ"}
+                            {sortBy === "price" && (
+                              <span>{sortOrder === "asc" ? "↑" : "↓"}</span>
+                            )}
+                          </button>
                         </th>
                         <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                           {language === "en" ? "Category" : "ប្រភេទ"}
@@ -456,7 +680,7 @@ export default function AdminDashboard() {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {menuItems.map((item) => (
+                      {sortedItems.map((item) => (
                         <tr
                           key={item.id}
                           className={`hover:bg-gray-50 transition-colors duration-200 ${
@@ -557,11 +781,11 @@ export default function AdminDashboard() {
                             >
                               {item.is_available
                                 ? language === "en"
-                                  ? "Available"
-                                  : "អាចរកបាន"
+                                  ? "InStock"
+                                  : "មានក្នុងស្តុក"
                                 : language === "en"
-                                ? "Unavailable"
-                                : "មិនអាចរកបាន"}
+                                ? "OutStock"
+                                : "អស់ស្តុក"}
                             </button>
                           </td>
                           <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2 md:space-x-3">
@@ -611,7 +835,7 @@ export default function AdminDashboard() {
                 </div>
               )}
 
-              {menuItems.length === 0 && (
+              {sortedItems.length === 0 && (
                 <div className="text-center py-8 md:py-12">
                   <div className="w-16 h-16 md:w-24 md:h-24 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                     <svg
@@ -636,9 +860,29 @@ export default function AdminDashboard() {
                     </p>
                     <p className="text-xs md:text-sm">
                       {language === "en"
-                        ? "Add your first item using the form to get started."
+                        ? searchTerm ||
+                          selectedCategory !== "all" ||
+                          statusFilter !== "all"
+                          ? "Try adjusting your search or filters."
+                          : "Add your first item using the form to get started."
+                        : searchTerm ||
+                          selectedCategory !== "all" ||
+                          statusFilter !== "all"
+                        ? "ព្យាយាមកែសម្រួលការស្វែងរក ឬតម្រងរបស់អ្នក។"
                         : "បន្ថែមធាតុដំបូងរបស់អ្នកដោយប្រើទម្រង់ដើម្បីចាប់ផ្តើម។"}
                     </p>
+                    {(searchTerm ||
+                      selectedCategory !== "all" ||
+                      statusFilter !== "all") && (
+                      <button
+                        onClick={clearAllFilters}
+                        className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                      >
+                        {language === "en"
+                          ? "Clear all filters"
+                          : "លុបតម្រងទាំងអស់"}
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
