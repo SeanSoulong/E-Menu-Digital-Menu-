@@ -954,7 +954,7 @@ export default function AdminDashboard() {
                             : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
                         }`}
                       >
-                        {language === "en" ? "Previous" : "មត្រឡប់ក្រោយ"}
+                        {language === "en" ? "Previous" : "ត្រឡប់ក្រោយ"}
                       </button>
 
                       {/* Page Numbers */}
