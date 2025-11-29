@@ -310,10 +310,10 @@ export default function AdminMenuItemForm({
           {editingItem
             ? language === "en"
               ? "Edit Menu Item"
-              : "កែសម្រួលធាតុមីនុយ"
+              : "កែសម្រួលមីនុយ"
             : language === "en"
             ? "Add New Menu Item"
-            : "បន្ថែមធាតុមីនុយថ្មី"}
+            : "បន្ថែមមីនុយថ្មី"}
         </h2>
       </div>
 
@@ -686,7 +686,7 @@ export default function AdminMenuItemForm({
                     d="M12 4v16m8-8H4"
                   />
                 </svg>
-                {language === "en" ? "Add Item" : "បន្ថែមធាតុ"}
+                {language === "en" ? "Add Item" : "បន្ថែមមីនុយ"}
               </>
             )}
           </button>
