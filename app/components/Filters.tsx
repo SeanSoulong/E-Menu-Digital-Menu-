@@ -33,7 +33,10 @@ export default function Filters({
   };
 
   return (
-    <div className="w-full lg:w-1/4 p-4 lg:p-6  from-white to-gray-50 border-b lg:border-r lg:border-b-0 border-gray-200 font-[Kantumruy_Pro]">
+    <div
+      className="w-full lg:w-1/4 p-4 lg:p-6  from-white to-gray-50 border-b lg:border-r lg:border-b-0 border-gray-200 font-[Kantumruy_Pro] sticky top-0 z-40 bg-white/80 backdrop-blur-md shadow-sm lg:static
+"
+    >
       <div className="flex items-center mb-4 lg:mb-8 w-full justify-between">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-gradient-to-br from-[#3F3F3F] to-[#2F2F2F] rounded-xl flex items-center justify-center text-white font-bold text-lg">
