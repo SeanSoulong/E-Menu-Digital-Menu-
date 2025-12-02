@@ -38,7 +38,7 @@ export default function Filters({
     >
       <div className="flex items-center mb-4 lg:mb-8 w-full justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-gradient-to-br from-[#3F3F3F] to-[#2F2F2F] rounded-xl flex items-center justify-center text-white font-bold text-lg">
+          <div className="w-12 h-12 bg-[#0E4123] rounded-xl flex items-center justify-center text-white font-bold text-lg">
             E
           </div>
           <div>
@@ -104,7 +104,7 @@ export default function Filters({
               onClick={() => onFilter("All")}
               className={`flex items-center gap-3 w-full text-left px-4 py-3 rounded-xl transition-all duration-200 font-semibold ${
                 activeCategory === "All"
-                  ? "bg-gradient-to-r from-[#3F3F3F] to-[#2F2F2F] text-white shadow-lg"
+                  ? "bg-[#0E4123] text-white shadow-lg"
                   : "text-gray-700 hover:bg-gray-100 hover:shadow-md"
               }`}
             >
@@ -122,7 +122,7 @@ export default function Filters({
                 onClick={() => onFilter(cat.en)}
                 className={`flex items-center gap-3 w-full text-left px-4 py-3 rounded-xl transition-all duration-200 font-semibold ${
                   activeCategory === cat.en
-                    ? "bg-gradient-to-r from-[#3F3F3F] to-[#2F2F2F] text-white shadow-lg"
+                    ? "bg-[#0E4123] text-white shadow-lg"
                     : "text-gray-700 hover:bg-gray-100 hover:shadow-md"
                 }`}
               >
@@ -148,7 +148,7 @@ export default function Filters({
             onClick={() => onFilter("All")}
             className={`px-3 py-2 border-2 rounded-xl whitespace-nowrap transition-all duration-200 font-semibold ${
               activeCategory === "All"
-                ? "bg-gradient-to-r from-[#3F3F3F] to-[#2F2F2F] text-white border-transparent shadow-lg"
+                ? "bg-[#0E4123] text-white border-transparent shadow-lg"
                 : "border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300"
             }`}
           >
@@ -160,7 +160,7 @@ export default function Filters({
               onClick={() => onFilter(cat.en)}
               className={`px-4 py-2 border-2 rounded-xl whitespace-nowrap transition-all duration-200 font-semibold ${
                 activeCategory === cat.en
-                  ? "bg-gradient-to-r from-[#3F3F3F] to-[#2F2F2F] text-white border-transparent shadow-lg"
+                  ? "bg-[#0E4123] text-white border-transparent shadow-lg"
                   : "border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300"
               }`}
             >

@@ -142,7 +142,7 @@ export default function CategoryManager({
     <div className="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-gray-100 font-[Kantumruy_Pro] hover-card">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
         <div className="flex items-center gap-3 mb-4 sm:mb-0">
-          <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold">
+          <div className="w-10 h-10 bg-[#0E4123] rounded-xl flex items-center justify-center text-white font-bold">
             📁
           </div>
           <div>
@@ -156,7 +156,7 @@ export default function CategoryManager({
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 bg-gradient-to-br from-[#3F3F3F] to-[#2F2F2F] text-white px-3 py-2 rounded-xl hover:from-[#2F2F2F] hover:to-[#1F1F1F] transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl font-semibold"
+          className="flex items-center gap-2 bg-[#0E4123] text-white px-3 py-2 rounded-xl hover:from-[#2F2F2F] hover:to-[#1F1F1F] transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl font-semibold"
         >
           {showForm ? (
             <>
@@ -259,7 +259,7 @@ export default function CategoryManager({
             <button
               type="submit"
               disabled={loading}
-              className="flex items-center gap-2 bg-gradient-to-br from-[#3F3F3F] to-[#2F2F2F] text-white px-3 py-2 rounded-xl hover:from-[#2F2F2F] hover:to-[#1F1F1F] transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl disabled:opacity-50 font-semibold"
+              className="flex items-center gap-2 bg-[#0E4123] text-white px-3 py-2 rounded-xl hover:from-[#2F2F2F] hover:to-[#1F1F1F] transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl disabled:opacity-50 font-semibold"
             >
               {loading ? (
                 <>

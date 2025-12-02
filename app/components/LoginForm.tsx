@@ -38,7 +38,7 @@ export default function LoginForm() {
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         {/* Logo/Brand Section */}
         <div className="flex justify-center">
-          <div className="w-16 h-16 bg-[#3F3F3F] rounded-2xl flex items-center justify-center text-white text-2xl font-bold">
+          <div className="w-16 h-16 bg-[#0E4123] rounded-2xl flex items-center justify-center text-white text-2xl font-bold">
             E
           </div>
         </div>
@@ -183,7 +183,7 @@ export default function LoginForm() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-semibold text-white bg-[#3F3F3F] hover:bg-[#2F2F2F] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3F3F3F] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.99]"
+                className="w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-semibold text-white bg-[#0E4123] hover:bg-[#2F2F2F] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3F3F3F] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.99]"
               >
                 {loading ? (
                   <>

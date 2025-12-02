@@ -297,7 +297,7 @@ export default function AdminDashboard() {
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 md:mb-8 p-4 md:p-6 bg-white rounded-2xl shadow-lg border border-gray-100">
           <div className="mb-4 lg:mb-0">
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-[#3F3F3F] to-[#2F2F2F] rounded-xl flex items-center justify-center text-white font-bold text-sm md:text-lg">
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-[#0E4123] rounded-xl flex items-center justify-center text-white font-bold text-sm md:text-lg">
                 E
               </div>
               <div>
@@ -390,7 +390,7 @@ export default function AdminDashboard() {
                     {language === "en" ? "Menu Items" : "ធាតុមីនុយ"}
                   </h2>
                   <div className="flex items-center gap-3">
-                    <span className="bg-[#3F3F3F] text-white px-2 md:px-3 py-1 rounded-full text-xs md:text-sm font-medium">
+                    <span className="bg-[#0E4123]  text-white px-2 md:px-3 py-1 rounded-full text-xs md:text-sm font-medium">
                       {filteredItems.length}/{menuItems.length}{" "}
                       {language === "en" ? "items" : "ធាតុ"}
                     </span>
@@ -443,7 +443,7 @@ export default function AdminDashboard() {
                         }
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 px-3 py-2 border border-gray-300 rounded-lg  focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white placeholder-gray-400 text-sm sm:text-base"
+                        className="w-full pl-10 px-3 py-2 border border-gray-300 rounded-lg  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white placeholder-gray-400 text-sm sm:text-base"
                       />
                       {searchTerm && (
                         <button
