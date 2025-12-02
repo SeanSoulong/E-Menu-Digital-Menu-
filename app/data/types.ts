@@ -9,6 +9,7 @@ export interface Product {
   priceUsd: string;
   priceKhr: string;
   contact: string;
+  is_available: boolean; // Add this field
 }
 
 export interface MenuItem {
@@ -21,8 +22,10 @@ export interface MenuItem {
   category_id: string;
   categories?: Category;
   image_url: string | null;
-  images: string[]; // New field for multiple images
+  images: string[];
   is_available: boolean;
+  is_best_seller?: boolean; // Optional: for best seller badge
+  is_new_arrival?: boolean; // Optional: for new arrival badge
   created_at: string;
 }
 

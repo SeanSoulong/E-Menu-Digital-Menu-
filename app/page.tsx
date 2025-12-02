@@ -49,7 +49,6 @@ export default function HomePage() {
             categories (name_en, name_kh)
           `
           )
-          .eq("is_available", true)
           .order("created_at", { ascending: false }),
         supabase.from("categories").select("*").order("name_en"),
       ]);
@@ -118,6 +117,7 @@ export default function HomePage() {
     priceUsd: `$${item.price.toFixed(2)}`,
     priceKhr: `៛${(item.price * 4100).toLocaleString()}`,
     contact: "098253453",
+    is_available: item.is_available,
   });
 
   // Prevent background scrolling when popup is open

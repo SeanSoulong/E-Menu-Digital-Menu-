@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import { FaSearch, FaTimes } from "react-icons/fa";
 import { useLanguage } from "../context/LanguageContext";

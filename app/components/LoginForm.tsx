@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
-
 export default function LoginForm() {
   const { language } = useLanguage();
   const { signIn } = useAuth();
