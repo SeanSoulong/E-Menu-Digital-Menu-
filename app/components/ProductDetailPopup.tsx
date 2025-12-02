@@ -7,6 +7,9 @@ import {
   FaTelegramPlane,
   FaMapMarkerAlt,
   FaPhoneAlt,
+  FaExclamationTriangle,
+  FaShoppingCart,
+  FaWhatsapp,
 } from "react-icons/fa";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
@@ -31,6 +34,23 @@ export default function ProductDetailPopup({
   const telegramUrl = "https://t.me/sothimaktey";
   const mapUrl = "https://maps.app.goo.gl/9xi5jv778zCMV5gs8";
   const phoneUrl = `tel:${product.contact || "098253453"}`;
+
+  // Create WhatsApp message
+  const whatsappMessage = encodeURIComponent(
+    language === "en"
+      ? `Hello! I'm interested in ${product.name.en}. Price: ${product.priceUsd} / ${product.priceKhr}`
+      : `សួស្តី! ខ្ញុំចាប់អារម្មណ៍លើ ${product.name.kh}។ តម្លៃ: ${product.priceUsd} / ${product.priceKhr}`
+  );
+  const whatsappUrl = `https://wa.me/${
+    product.contact || "85598253453"
+  }?text=${whatsappMessage}`;
+
+  const handleOrder = () => {
+    if (product.is_available) {
+      // Open WhatsApp for ordering
+      window.open(whatsappUrl, "_blank");
+    }
+  };
 
   return (
     <div className="fixed inset-0 flex items-center justify-center p-4 z-50 bg-black/50 backdrop-blur-sm font-[Kantumruy_Pro]">
@@ -58,15 +78,23 @@ export default function ProductDetailPopup({
             >
               {product.images?.map((image, index) => (
                 <SwiperSlide key={index}>
-                  <div className="flex items-center justify-center h-full">
+                  <div className="flex items-center justify-center h-full relative">
                     <Image
                       src={image}
                       alt={product.name[language]}
                       width={500}
                       height={400}
                       unoptimized
-                      className="rounded-lg object-cover w-full h-auto max-h-80 md:max-h-96 lg:max-h-[400px] border"
+                      className={`rounded-lg object-cover w-full h-auto max-h-80 md:max-h-96 lg:max-h-[400px] border ${
+                        !product.is_available ? "opacity-90" : ""
+                      }`}
                     />
+                    {/* Out of Stock Overlay on Image */}
+                    {!product.is_available && (
+                      <div className="absolute top-4 right-4 bg-[#0E4123] text-white px-3 py-1 rounded-lg text-sm font-bold">
+                        {language === "en" ? "Out of Stock" : "អស់ស្តុក"}
+                      </div>
+                    )}
                   </div>
                 </SwiperSlide>
               ))}
@@ -75,13 +103,32 @@ export default function ProductDetailPopup({
 
           {/* Product Details */}
           <div className="lg:w-1/2 flex flex-col justify-start">
+            {/* Out of Stock Warning */}
+            {!product.is_available && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <FaExclamationTriangle className="text-red-600" />
+                  <span className="text-red-700 font-semibold">
+                    {language === "en" ? "Out of Stock" : "អស់ស្តុក"}
+                  </span>
+                </div>
+                <p className="text-red-600 text-sm">
+                  {language === "en"
+                    ? "This item is currently unavailable for ordering. You can still view details or contact us for more information."
+                    : "ផលិតផលនេះមិនអាចបញ្ជាទិញបាននាពេលនេះទេ។ អ្នកនៅតែអាចមើលព័ត៌មានលម្អិត ឬទាក់ទងមកយើងខ្ញុំសម្រាប់ព័ត៌មានបន្ថែម។"}
+                </p>
+              </div>
+            )}
+
             <div className="mb-4 md:mb-6">
-              {/* <div className="bg-gradient-to-r from-[#3F3F3F] to-[#2F2F2F] text-white px-3 py-1 rounded-lg text-sm font-bold inline-block mb-3">
-                ID: {product.id}
-              </div> */}
-              <h2 className="text-[16px] md:text-[18px] lg:text-[20px] font-bold text-gray-900 mb-2 md:mb-3 leading-tight truncate max-w-full">
+              <h2
+                className={`text-[16px] md:text-[18px] lg:text-[20px] font-bold mb-2 md:mb-3 leading-tight truncate max-w-full ${
+                  !product.is_available ? "text-gray-600" : "text-gray-900"
+                }`}
+              >
                 {product.name[language]}
               </h2>
+
               <div className="text-gray-700 leading-relaxed space-y-1 md:space-y-2 mb-3 md:mb-4">
                 {product.description[language]
                   .split("\n")
@@ -92,12 +139,20 @@ export default function ProductDetailPopup({
                   ))}
               </div>
 
-              <div className="flex items-center justify-between mt-2">
-                <span className="text-green-700 text-base md:text-lg font-bold truncate max-w-[150px] md:max-w-[200px]">
-                  {language === "en" ? "Price" : "តម្លៃ"}: {product.priceKhr}
+              <div className="flex items-center justify-between mt-2 bg-gray-50 p-3 rounded-lg">
+                <span
+                  className={`text-base md:text-lg font-bold truncate max-w-[150px] md:max-w-[200px] ${
+                    !product.is_available ? "text-gray-500" : "text-green-700"
+                  }`}
+                >
+                  {product.priceKhr}
                 </span>
 
-                <span className="text-gray-500 text-xs md:text-sm truncate max-w-[80px] md:max-w-[100px]">
+                <span
+                  className={`text-xs md:text-sm truncate max-w-[80px] md:max-w-[100px] ${
+                    !product.is_available ? "text-gray-400" : "text-gray-600"
+                  }`}
+                >
                   {product.priceUsd}
                 </span>
               </div>
@@ -147,6 +202,11 @@ export default function ProductDetailPopup({
                   </span>
                 </a>
               </div>
+              <p className="text-xs text-gray-500 mt-3">
+                {language === "en"
+                  ? "Contact us for more information about this product"
+                  : "ទាក់ទងមកយើងខ្ញុំសម្រាប់ព័ត៌មានបន្ថែមអំពីផលិតផលនេះ"}
+              </p>
             </div>
           </div>
         </div>

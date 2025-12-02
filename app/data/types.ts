@@ -9,7 +9,8 @@ export interface Product {
   priceUsd: string;
   priceKhr: string;
   contact: string;
-  is_available: boolean; // Add this field
+  is_available: boolean;
+  is_new_arrival?: boolean;
 }
 
 export interface MenuItem {
@@ -24,8 +25,7 @@ export interface MenuItem {
   image_url: string | null;
   images: string[];
   is_available: boolean;
-  is_best_seller?: boolean; // Optional: for best seller badge
-  is_new_arrival?: boolean; // Optional: for new arrival badge
+  is_new_arrival?: boolean;
   created_at: string;
 }
 

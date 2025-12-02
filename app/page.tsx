@@ -97,6 +97,15 @@ export default function HomePage() {
     return categoryMatch && queryMatch;
   });
 
+  // Helper function to check if product is new (within last 7 days)
+  const isNewArrival = (createdAt: string): boolean => {
+    const createdDate = new Date(createdAt);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - createdDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays <= 7;
+  };
+
   const convertToProduct = (item: MenuItem): Product => ({
     id: item.id,
     name: { en: item.name_en, kh: item.name_kh },
@@ -118,6 +127,7 @@ export default function HomePage() {
     priceKhr: `៛${(item.price * 4100).toLocaleString()}`,
     contact: "098253453",
     is_available: item.is_available,
+    is_new_arrival: isNewArrival(item.created_at),
   });
 
   // Prevent background scrolling when popup is open
@@ -172,6 +182,7 @@ export default function HomePage() {
           <ProductGrid
             products={filteredProducts.map(convertToProduct)}
             onProductClick={(p) => {
+              // Allow clicking on ALL products (both available and out of stock)
               const originalItem = menuItems.find((item) => item.id === p.id);
               setSelectedProduct(convertToProduct(originalItem!));
               setIsPopupOpen(true);
