@@ -4,6 +4,7 @@ import Footer from "./ui/Footer";
 import { LanguageProvider } from "./context/LanguageContext";
 import { AuthProvider } from "./context/AuthContext";
 import { Kantumruy_Pro } from "next/font/google";
+import { Metadata } from "next";
 const kantumruyPro = Kantumruy_Pro({
   variable: "--font-kantumruy-pro",
   subsets: ["latin"],
@@ -14,6 +15,11 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
+export const metadata: Metadata = {
+  title: "EMOJI | MENU",
+  description:
+    "Admin panel for Emoji Restaurant. Manage menu items, categories, and orders with ease.",
+};
 
 export default function RootLayout({
   children,
