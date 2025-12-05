@@ -4,6 +4,7 @@ import { createClient } from "../../lib/supabase-client";
 import { MenuItem, Category } from "../data/types";
 import { useLanguage } from "../context/LanguageContext";
 import { uploadMultipleImages } from "../../lib/imageUpload";
+import { ChevronDownIcon } from "@heroicons/react/24/solid";
 
 interface AdminMenuItemFormProps {
   categories: Category[];
@@ -34,7 +35,9 @@ export default function AdminMenuItemForm({
   const [loading, setLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [activeKebabIndex, setActiveKebabIndex] = useState<number | null>(null);
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const kebabMenuRef = useRef<HTMLDivElement>(null);
+  const categoryDropdownRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
 
   // Check screen size
@@ -70,6 +73,23 @@ export default function AdminMenuItemForm({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("touchstart", handleClickOutside);
+    };
+  }, []);
+
+  // Close category dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        categoryDropdownRef.current &&
+        !categoryDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsCategoryDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
@@ -262,6 +282,7 @@ export default function AdminMenuItemForm({
         images: [],
       });
       setActiveKebabIndex(null);
+      setIsCategoryDropdownOpen(false);
 
       alert(
         language === "en"
@@ -280,6 +301,21 @@ export default function AdminMenuItemForm({
     } finally {
       setLoading(false);
     }
+  };
+
+  // Helper function to get category name
+  const getCategoryName = (categoryId: string) => {
+    if (!categoryId) {
+      return language === "en" ? "Select Category" : "ជ្រើសរើសប្រភេទ";
+    }
+    const category = categories.find((cat) => cat.id === categoryId);
+    return category
+      ? language === "en"
+        ? category.name_en
+        : category.name_kh
+      : language === "en"
+      ? "Select Category"
+      : "ជ្រើសរើសប្រភេទ";
   };
 
   // Upload icon component
@@ -609,7 +645,7 @@ export default function AdminMenuItemForm({
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, price: e.target.value }))
                 }
-                className="w-full pl-8 sm:pl-10 pr-3 sm:pr-4  py-2  border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white placeholder-gray-400 text-sm sm:text-base"
+                className="w-full pl-8 sm:pl-10 pr-3 sm:pr-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white placeholder-gray-400 text-sm sm:text-base"
                 placeholder="0.00"
               />
             </div>
@@ -619,26 +655,63 @@ export default function AdminMenuItemForm({
             <label className="block text-sm font-semibold text-gray-700 mb-1 sm:mb-2 pl-1">
               {language === "en" ? "Category" : "ប្រភេទ"}
             </label>
-            <select
-              required
-              value={formData.category_id}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  category_id: e.target.value,
-                }))
-              }
-              className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white appearance-none text-sm sm:text-base"
-            >
-              <option value="">
-                {language === "en" ? "Select Category" : "ជ្រើសរើសប្រភេទ"}
-              </option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {language === "en" ? category.name_en : category.name_kh}
-                </option>
-              ))}
-            </select>
+
+            {/* Custom Category Dropdown */}
+            <div className="relative" ref={categoryDropdownRef}>
+              <button
+                type="button"
+                onClick={() =>
+                  setIsCategoryDropdownOpen(!isCategoryDropdownOpen)
+                }
+                className="w-full flex items-center justify-between px-3 py-2 border border-gray-200 rounded-xl 
+                 focus:outline-none focus:ring-2 focus:ring-blue-500 
+                 focus:border-transparent transition-all duration-200 
+                 bg-gray-50 focus:bg-white text-sm sm:text-base text-left"
+              >
+                <span className="text-gray-900">
+                  {getCategoryName(formData.category_id)}
+                </span>
+                <ChevronDownIcon
+                  className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${
+                    isCategoryDropdownOpen ? "rotate-180" : "rotate-0"
+                  }`}
+                />
+              </button>
+
+              {/* Dropdown Menu */}
+              {isCategoryDropdownOpen && (
+                <div className="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-10 max-h-60 overflow-y-auto">
+                  <ul className="py-1">
+                    <li
+                      className="px-3 py-2 cursor-pointer hover:bg-gray-50 text-sm text-gray-700"
+                      onClick={() => {
+                        setFormData((prev) => ({ ...prev, category_id: "" }));
+                        setIsCategoryDropdownOpen(false);
+                      }}
+                    >
+                      {language === "en" ? "Select Category" : "ជ្រើសរើសប្រភេទ"}
+                    </li>
+                    {categories.map((category) => (
+                      <li
+                        key={category.id}
+                        className="px-3 py-2 cursor-pointer hover:bg-gray-50 text-sm text-gray-700"
+                        onClick={() => {
+                          setFormData((prev) => ({
+                            ...prev,
+                            category_id: category.id,
+                          }));
+                          setIsCategoryDropdownOpen(false);
+                        }}
+                      >
+                        {language === "en"
+                          ? category.name_en
+                          : category.name_kh}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

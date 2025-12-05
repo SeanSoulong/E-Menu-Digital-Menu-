@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { createClient } from "../../lib/supabase-client";
 import { MenuItem, Category } from "../data/types";
 import AdminMenuItemForm from "./AdminMenuItemForm";
@@ -8,6 +8,7 @@ import { useLanguage } from "../context/LanguageContext";
 import { useAuth } from "../context/AuthContext";
 import LanguageSwitcher from "./LanguageSwitcher";
 import Link from "next/link";
+import { ChevronDownIcon } from "@heroicons/react/24/solid";
 
 export default function AdminDashboard() {
   const { language } = useLanguage();
@@ -19,6 +20,46 @@ export default function AdminDashboard() {
   const [screenSize, setScreenSize] = useState<"mobile" | "tablet" | "desktop">(
     "desktop"
   );
+  // Add these state variables with the other states at the top of the component
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
+  const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
+  const [itemsPerPageDropdownOpen, setItemsPerPageDropdownOpen] =
+    useState(false);
+
+  // Create refs for scrolling
+  const formRef = useRef<HTMLDivElement>(null);
+  const editButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Add click outside handler for dropdowns
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      // Close category dropdown if clicked outside
+      if (
+        !(event.target as HTMLElement).closest(".category-dropdown-container")
+      ) {
+        setCategoryDropdownOpen(false);
+      }
+      // Close status dropdown if clicked outside
+      if (
+        !(event.target as HTMLElement).closest(".status-dropdown-container")
+      ) {
+        setStatusDropdownOpen(false);
+      }
+      // Close items per page dropdown if clicked outside
+      if (
+        !(event.target as HTMLElement).closest(
+          ".items-per-page-dropdown-container"
+        )
+      ) {
+        setItemsPerPageDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // Search and Filter states
   const [searchTerm, setSearchTerm] = useState("");
@@ -99,6 +140,30 @@ export default function AdminDashboard() {
       window.removeEventListener("resize", checkScreenSize);
     };
   }, [fetchData, supabase]);
+
+  // Auto-scroll to form when editing an item on mobile/tablet
+  useEffect(() => {
+    if (editingItem && (screenSize === "mobile" || screenSize === "desktop")) {
+      // Small delay to ensure the form is rendered
+      setTimeout(() => {
+        if (formRef.current) {
+          formRef.current.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        }
+      }, 100);
+    }
+  }, [editingItem, screenSize]);
+
+  const handleEditClick = (item: MenuItem, event?: React.MouseEvent) => {
+    setEditingItem(item);
+
+    // For mobile/tablet, store the button ref if available
+    if (event && event.currentTarget) {
+      editButtonRef.current = event.currentTarget as HTMLButtonElement;
+    }
+  };
 
   // Filter and sort items
   const filteredItems = menuItems.filter((item) => {
@@ -283,9 +348,38 @@ export default function AdminDashboard() {
     );
   }
 
+  // Helper function to get category name
+  const getCategoryName = (categoryId: string) => {
+    if (categoryId === "all") {
+      return language === "en" ? "All Categories" : "ប្រភេទទាំងអស់";
+    }
+    const category = categories.find((cat) => cat.id === categoryId);
+    return category
+      ? language === "en"
+        ? category.name_en
+        : category.name_kh
+      : language === "en"
+      ? "All Categories"
+      : "ប្រភេទទាំងអស់";
+  };
+
+  // Helper function to get status name
+  const getStatusName = (status: string) => {
+    switch (status) {
+      case "all":
+        return language === "en" ? "All Status" : "ស្ថានភាពទាំងអស់";
+      case "available":
+        return language === "en" ? "InStock" : "មានក្នុងស្តុក";
+      case "unavailable":
+        return language === "en" ? "OutStock" : "អស់ស្តុក";
+      default:
+        return language === "en" ? "All Status" : "ស្ថានភាពទាំងអស់";
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6 font-[Kantumruy_Pro]">
-      <div className="max-w-7xl mx-auto">
+      <div className="w-full">
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div className="flex items-center gap-3">
@@ -368,15 +462,43 @@ export default function AdminDashboard() {
         {/* Main Content Grid - ALWAYS show both form and list */}
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-4 md:gap-6">
           {/* Form Section - ALWAYS VISIBLE */}
-          <div className="xl:col-span-1">
+          <div ref={formRef} className="xl:col-span-1">
             <AdminMenuItemForm
               categories={categories}
               editingItem={editingItem}
               onSave={() => {
                 setEditingItem(null);
                 fetchData();
+                // Scroll back to items list on save (mobile/tablet only)
+                if (screenSize !== "desktop") {
+                  setTimeout(() => {
+                    const itemsContainer =
+                      document.getElementById("items-container");
+                    if (itemsContainer) {
+                      itemsContainer.scrollIntoView({
+                        behavior: "smooth",
+                        block: "start",
+                      });
+                    }
+                  }, 300);
+                }
               }}
-              onCancel={() => setEditingItem(null)}
+              onCancel={() => {
+                setEditingItem(null);
+                // Scroll back to items list on cancel (mobile/tablet only)
+                if (screenSize !== "desktop") {
+                  setTimeout(() => {
+                    const itemsContainer =
+                      document.getElementById("items-container");
+                    if (itemsContainer) {
+                      itemsContainer.scrollIntoView({
+                        behavior: "smooth",
+                        block: "start",
+                      });
+                    }
+                  }, 100);
+                }
+              }}
             />
           </div>
 
@@ -405,7 +527,22 @@ export default function AdminDashboard() {
                             : editingItem.name_kh}
                         </span>
                         <button
-                          onClick={() => setEditingItem(null)}
+                          onClick={() => {
+                            setEditingItem(null);
+                            // Scroll back to items list on cancel (mobile/tablet only)
+                            if (screenSize !== "desktop") {
+                              setTimeout(() => {
+                                const itemsContainer =
+                                  document.getElementById("items-container");
+                                if (itemsContainer) {
+                                  itemsContainer.scrollIntoView({
+                                    behavior: "smooth",
+                                    block: "start",
+                                  });
+                                }
+                              }, 100);
+                            }
+                          }}
                           className="text-sm text-gray-600 hover:text-gray-800 transition-colors bg-gray-100 px-2 py-1 rounded-lg"
                         >
                           {language === "en" ? "Cancel" : "បោះបង់"}
@@ -468,44 +605,109 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  {/* Category Filter */}
-                  <select
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm min-w-[140px]"
-                  >
-                    <option value="all">
-                      {language === "en" ? "All Categories" : "ប្រភេទទាំងអស់"}
-                    </option>
-                    {categories.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {language === "en"
-                          ? category.name_en
-                          : category.name_kh}
-                      </option>
-                    ))}
-                  </select>
+                  {/* Category Filter - Custom Dropdown */}
+                  <div className="relative category-dropdown-container">
+                    <button
+                      onClick={() =>
+                        setCategoryDropdownOpen(!categoryDropdownOpen)
+                      }
+                      className="flex items-center justify-between w-full pl-3 pr-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm min-w-[140px] bg-white"
+                    >
+                      <span className="text-gray-700 truncate">
+                        {getCategoryName(selectedCategory)}
+                      </span>
+                      <ChevronDownIcon
+                        className={`w-5 h-5 text-gray-500 ml-2 transition-transform duration-200 ${
+                          categoryDropdownOpen ? "rotate-180" : "rotate-0"
+                        }`}
+                      />
+                    </button>
 
-                  {/* Status Filter */}
-                  <select
-                    value={statusFilter}
-                    onChange={(e) =>
-                      setStatusFilter(
-                        e.target.value as "all" | "available" | "unavailable"
-                      )
-                    }
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm min-w-[140px]"
-                  >
-                    <option value="all">
-                      {language === "en" ? "All Status" : "ស្ថានភាពទាំងអស់"}
-                    </option>
-                    <option value="available">
-                      {language === "en" ? "InStock" : "មានក្នុងស្តុក"}
-                    </option>
-                    <option value="unavailable">
-                      {language === "en" ? "OutStock" : "អស់ស្តុក"}
-                    </option>
-                  </select>
+                    {categoryDropdownOpen && (
+                      <div className="absolute left-0 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
+                        <ul className="py-1">
+                          <li
+                            className="px-3 py-2 cursor-pointer hover:bg-gray-100 text-sm text-gray-700"
+                            onClick={() => {
+                              setSelectedCategory("all");
+                              setCategoryDropdownOpen(false);
+                            }}
+                          >
+                            {language === "en"
+                              ? "All Categories"
+                              : "ប្រភេទទាំងអស់"}
+                          </li>
+                          {categories.map((category) => (
+                            <li
+                              key={category.id}
+                              className="px-3 py-2 cursor-pointer hover:bg-gray-100 text-sm text-gray-700"
+                              onClick={() => {
+                                setSelectedCategory(category.id);
+                                setCategoryDropdownOpen(false);
+                              }}
+                            >
+                              {language === "en"
+                                ? category.name_en
+                                : category.name_kh}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Status Filter - Custom Dropdown */}
+                  <div className="relative status-dropdown-container">
+                    <button
+                      onClick={() => setStatusDropdownOpen(!statusDropdownOpen)}
+                      className="flex items-center justify-between w-full pl-3 pr-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm min-w-[140px] bg-white"
+                    >
+                      <span className="text-gray-700 truncate">
+                        {getStatusName(statusFilter)}
+                      </span>
+                      <ChevronDownIcon
+                        className={`w-5 h-5 text-gray-500 ml-2 transition-transform duration-200 ${
+                          statusDropdownOpen ? "rotate-180" : "rotate-0"
+                        }`}
+                      />
+                    </button>
+
+                    {statusDropdownOpen && (
+                      <div className="absolute left-0 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                        <ul className="py-1">
+                          <li
+                            className="px-3 py-2 cursor-pointer hover:bg-gray-100 text-sm text-gray-700"
+                            onClick={() => {
+                              setStatusFilter("all");
+                              setStatusDropdownOpen(false);
+                            }}
+                          >
+                            {language === "en"
+                              ? "All Status"
+                              : "ស្ថានភាពទាំងអស់"}
+                          </li>
+                          <li
+                            className="px-3 py-2 cursor-pointer hover:bg-gray-100 text-sm text-gray-700"
+                            onClick={() => {
+                              setStatusFilter("available");
+                              setStatusDropdownOpen(false);
+                            }}
+                          >
+                            {language === "en" ? "InStock" : "មានក្នុងស្តុក"}
+                          </li>
+                          <li
+                            className="px-3 py-2 cursor-pointer hover:bg-gray-100 text-sm text-gray-700"
+                            onClick={() => {
+                              setStatusFilter("unavailable");
+                              setStatusDropdownOpen(false);
+                            }}
+                          >
+                            {language === "en" ? "OutStock" : "អស់ស្តុក"}
+                          </li>
+                        </ul>
+                      </div>
+                    )}
+                  </div>
 
                   {/* Clear Filters */}
                   {(searchTerm ||
@@ -562,26 +764,48 @@ export default function AdminDashboard() {
               </div>
 
               {/* Items Per Page Selector */}
-              <div className="px-4 md:px-6 py-3 border-b border-gray-100 bg-gray-50 flex flex-col sm:flex-row justify-between items-center gap-3">
+              <div className="px-4 md:px-6 py-3 border-b border-gray-100 bg-gray-50 flex flex-col sm:flex-row justify-between items-center gap-3 relative items-per-page-dropdown-container">
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-gray-600">
                     {language === "en"
                       ? "Items per page:"
                       : "ធាតុក្នុងមួយទំព័រ:"}
                   </span>
-                  <select
-                    value={itemsPerPage}
-                    onChange={(e) => {
-                      setItemsPerPage(Number(e.target.value));
-                      setCurrentPage(1);
-                    }}
-                    className="text-xs border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value={5}>5</option>
-                    <option value={10}>10</option>
-                    <option value={20}>20</option>
-                    <option value={50}>50</option>
-                  </select>
+                  <div className="relative ">
+                    <button
+                      onClick={() =>
+                        setItemsPerPageDropdownOpen(!itemsPerPageDropdownOpen)
+                      }
+                      className="flex items-center justify-between text-xs border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white pr-6"
+                    >
+                      {itemsPerPage}
+                      <ChevronDownIcon
+                        className={`w-3 h-3 text-gray-500 ml-1 transition-transform duration-200 ${
+                          itemsPerPageDropdownOpen ? "rotate-180" : "rotate-0"
+                        }`}
+                      />
+                    </button>
+
+                    {itemsPerPageDropdownOpen && (
+                      <div className="absolute left-0 mt-1 w-full bg-white border border-gray-200 rounded shadow-lg z-10">
+                        <ul className="py-1">
+                          {[5, 10, 20, 50].map((num) => (
+                            <li
+                              key={num}
+                              className="px-2 py-1 cursor-pointer hover:bg-gray-100 text-xs text-gray-700"
+                              onClick={() => {
+                                setItemsPerPage(num);
+                                setCurrentPage(1);
+                                setItemsPerPageDropdownOpen(false);
+                              }}
+                            >
+                              {num}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Pagination Info */}
@@ -695,7 +919,7 @@ export default function AdminDashboard() {
                           {/* Actions */}
                           <div className="flex items-center gap-2">
                             <button
-                              onClick={() => setEditingItem(item)}
+                              onClick={(e) => handleEditClick(item, e)}
                               className={`text-blue-600 hover:text-blue-800 transition-colors duration-200 p-2 rounded-lg ${
                                 editingItem?.id === item.id
                                   ? "bg-blue-100"
@@ -888,7 +1112,7 @@ export default function AdminDashboard() {
                             </td>
                             <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2 md:space-x-3">
                               <button
-                                onClick={() => setEditingItem(item)}
+                                onClick={(e) => handleEditClick(item, e)}
                                 className="text-blue-600 hover:text-blue-800 font-semibold transition-colors duration-200 flex items-center gap-1 text-xs md:text-sm"
                               >
                                 <svg
@@ -1007,23 +1231,52 @@ export default function AdminDashboard() {
                     </div>
 
                     {/* Items Per Page Selector (Bottom) */}
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 ">
                       <span className="text-xs text-gray-600">
                         {language === "en" ? "Show:" : "បង្ហាញ:"}
                       </span>
-                      <select
-                        value={itemsPerPage}
-                        onChange={(e) => {
-                          setItemsPerPage(Number(e.target.value));
-                          setCurrentPage(1);
-                        }}
-                        className="text-xs border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                      >
-                        <option value={5}>5</option>
-                        <option value={10}>10</option>
-                        <option value={20}>20</option>
-                        <option value={50}>50</option>
-                      </select>
+                      <div className=" relative items-per-page-dropdown-container ">
+                        <button
+                          onClick={() =>
+                            setItemsPerPageDropdownOpen(
+                              !itemsPerPageDropdownOpen
+                            )
+                          }
+                          className="flex items-center justify-between text-xs border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white pr-6"
+                        >
+                          {itemsPerPage}
+                          <ChevronDownIcon
+                            className={`w-3 h-3 text-gray-500 ml-1 transition-transform duration-200 ${
+                              itemsPerPageDropdownOpen
+                                ? "rotate-180"
+                                : "rotate-0"
+                            }`}
+                          />
+                        </button>
+
+                        {itemsPerPageDropdownOpen && (
+                          <div
+                            className="absolute left-0 bottom-full mb-1 bg-white border border-gray-200 rounded-lg shadow-xl z-50 min-w-[80px]"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <ul className="py-1">
+                              {[5, 10, 20, 50].map((num) => (
+                                <li
+                                  key={num}
+                                  className="px-3 py-2 cursor-pointer hover:bg-gray-100 text-sm text-gray-700 transition-colors"
+                                  onClick={() => {
+                                    setItemsPerPage(num);
+                                    setCurrentPage(1);
+                                    setItemsPerPageDropdownOpen(false);
+                                  }}
+                                >
+                                  {num}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

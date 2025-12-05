@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createClient } from "../../lib/supabase-client";
 import { Category } from "../data/types";
 import { useLanguage } from "../context/LanguageContext";
@@ -21,7 +21,56 @@ export default function CategoryManager({
     name_kh: "",
   });
   const [loading, setLoading] = useState(false);
+  const [screenSize, setScreenSize] = useState<"mobile" | "tablet" | "desktop">(
+    "desktop"
+  );
+
+  // Ref for auto-scrolling to form
+  const formRef = useRef<HTMLFormElement>(null);
+
   const supabase = createClient();
+
+  // Check screen size
+  useEffect(() => {
+    const checkScreenSize = () => {
+      const width = window.innerWidth;
+      if (width < 768) {
+        setScreenSize("mobile");
+      } else if (width >= 768 && width < 1024) {
+        setScreenSize("tablet");
+      } else {
+        setScreenSize("desktop");
+      }
+    };
+
+    checkScreenSize();
+    window.addEventListener("resize", checkScreenSize);
+
+    return () => {
+      window.removeEventListener("resize", checkScreenSize);
+    };
+  }, []);
+
+  // Auto-scroll to form when editing a category on mobile/tablet
+  useEffect(() => {
+    if (
+      editingCategory &&
+      (screenSize === "mobile" ||
+        screenSize === "tablet" ||
+        screenSize === "desktop") &&
+      formRef.current
+    ) {
+      // Small delay to ensure the form is rendered
+      setTimeout(() => {
+        if (formRef.current) {
+          formRef.current.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+        }
+      }, 100);
+    }
+  }, [editingCategory, screenSize]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -155,7 +204,11 @@ export default function CategoryManager({
           </div>
         </div>
         <button
-          onClick={() => setShowForm(!showForm)}
+          onClick={() => {
+            setShowForm(!showForm);
+            setEditingCategory(null);
+            setFormData({ name_en: "", name_kh: "" });
+          }}
           className="flex items-center gap-2 bg-[#0E4123] text-white px-3 py-2 rounded-xl hover:from-[#2F2F2F] hover:to-[#1F1F1F] transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl font-semibold"
         >
           {showForm ? (
@@ -196,24 +249,35 @@ export default function CategoryManager({
         </button>
       </div>
 
-      {/* Category Form */}
+      {/* Category Form with ref */}
       {showForm && (
         <form
+          ref={formRef}
           onSubmit={handleSubmit}
           className="mb-6 p-6 border-2 border-dashed border-gray-200 rounded-2xl bg-gradient-to-br from-gray-50 to-white"
         >
-          <h4 className="font-bold text-lg mb-4 text-gray-900 flex items-center gap-2">
-            <div className="w-6 h-6 bg-blue-500 rounded-lg flex items-center justify-center text-white text-sm">
-              {editingCategory ? "✏️" : "➕"}
-            </div>
-            {editingCategory
-              ? language === "en"
-                ? "Edit Category"
-                : "កែសម្រួលប្រភេទ"
-              : language === "en"
-              ? "Add New Category"
-              : "បន្ថែមប្រភេទថ្មី"}
-          </h4>
+          <div className="flex justify-between items-center mb-4">
+            <h4 className="font-bold text-lg text-gray-900 flex items-center gap-2">
+              <div className="w-6 h-6 bg-blue-500 rounded-lg flex items-center justify-center text-white text-sm">
+                {editingCategory ? "✏️" : "➕"}
+              </div>
+              {editingCategory
+                ? language === "en"
+                  ? "Edit Category"
+                  : "កែសម្រួលប្រភេទ"
+                : language === "en"
+                ? "Add New Category"
+                : "បន្ថែមប្រភេទថ្មី"}
+            </h4>
+
+            {/* Show editing indicator on mobile/tablet */}
+            {(screenSize === "mobile" || screenSize === "tablet") &&
+              editingCategory && (
+                <div className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                  {language === "en" ? "Editing" : "កំពុងកែសម្រួល"}
+                </div>
+              )}
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div>
@@ -255,11 +319,11 @@ export default function CategoryManager({
             </div>
           </div>
 
-          <div className="flex space-x-3">
+          <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
             <button
               type="submit"
               disabled={loading}
-              className="flex items-center gap-2 bg-[#0E4123] text-white px-3 py-2 rounded-xl hover:from-[#2F2F2F] hover:to-[#1F1F1F] transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl disabled:opacity-50 font-semibold"
+              className="flex items-center justify-center gap-2 bg-[#0E4123] text-white px-3 py-2 rounded-xl hover:from-[#2F2F2F] hover:to-[#1F1F1F] transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl disabled:opacity-50 font-semibold flex-1"
             >
               {loading ? (
                 <>
@@ -308,7 +372,7 @@ export default function CategoryManager({
             <button
               type="button"
               onClick={resetForm}
-              className="flex items-center gap-2 bg-gradient-to-br from-gray-300 to-gray-400 text-gray-700 px-6 py-3 rounded-xl hover:from-gray-400 hover:to-gray-500 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl font-semibold"
+              className="flex items-center justify-center gap-2 bg-gradient-to-br from-gray-300 to-gray-400 text-gray-700 px-3 py-2 rounded-xl hover:from-gray-400 hover:to-gray-500 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl font-semibold flex-1"
             >
               <svg
                 className="w-4 h-4"
@@ -326,6 +390,18 @@ export default function CategoryManager({
               {language === "en" ? "Cancel" : "បោះបង់"}
             </button>
           </div>
+
+          {/* Scroll hint for mobile/tablet when editing */}
+          {(screenSize === "mobile" || screenSize === "tablet") &&
+            editingCategory && (
+              <div className="mt-4 text-center">
+                <p className="text-xs text-gray-500 animate-pulse">
+                  {language === "en"
+                    ? "↑ Scroll up to see the form"
+                    : "↑ រំកិលឡើងលើដើម្បីមើលទម្រង់"}
+                </p>
+              </div>
+            )}
         </form>
       )}
 
@@ -366,7 +442,11 @@ export default function CategoryManager({
             {categories.map((category) => (
               <div
                 key={category.id}
-                className="border-2 border-gray-100 rounded-2xl p-4 flex justify-between items-center bg-white hover:border-blue-200 hover:shadow-md transition-all duration-200"
+                className={`border-2 rounded-2xl p-4 flex justify-between items-center bg-white hover:shadow-md transition-all duration-200 ${
+                  editingCategory?.id === category.id
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-gray-100 hover:border-blue-200"
+                }`}
               >
                 <div className="flex-1">
                   <div className="font-bold text-gray-900 text-sm">
@@ -380,7 +460,11 @@ export default function CategoryManager({
                 <div className="flex space-x-2 ml-3">
                   <button
                     onClick={() => startEdit(category)}
-                    className="text-blue-600 hover:text-blue-800 text-sm font-semibold transition-colors duration-200 flex items-center gap-1 bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded-lg"
+                    className={`text-sm font-semibold transition-colors duration-200 flex items-center gap-1 px-3 py-2 rounded-lg ${
+                      editingCategory?.id === category.id
+                        ? "bg-blue-100 text-blue-700"
+                        : "bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-800"
+                    }`}
                   >
                     <svg
                       className="w-3 h-3"
