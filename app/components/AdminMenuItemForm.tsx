@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { createClient } from "../../lib/supabase-client";
 import { MenuItem, Category } from "../data/types";
 import { useLanguage } from "../context/LanguageContext";
@@ -36,9 +36,159 @@ export default function AdminMenuItemForm({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [activeKebabIndex, setActiveKebabIndex] = useState<number | null>(null);
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
+  const [translating, setTranslating] = useState(false);
   const kebabMenuRef = useRef<HTMLDivElement>(null);
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
+
+  // Custom debounce hook
+  const useDebounce = <T extends unknown[]>(
+    callback: (...args: T) => void,
+    delay: number
+  ) => {
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    return useCallback(
+      (...args: T) => {
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+        }
+        timeoutRef.current = setTimeout(() => {
+          callback(...args);
+        }, delay);
+      },
+      [callback, delay]
+    );
+  };
+
+  // Translation function using Google Translate API
+  const translateText = async (
+    text: string,
+    sourceLang: string = "km",
+    targetLang: string = "en"
+  ): Promise<string> => {
+    try {
+      if (!text.trim()) return "";
+
+      // Free method using Google Translate (no API key required)
+      const response = await fetch(
+        `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLang}&tl=${targetLang}&dt=t&q=${encodeURIComponent(
+          text
+        )}`
+      );
+
+      if (!response.ok) {
+        throw new Error(`Translation failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      // Extract translated text
+      const translatedText = data[0].map((item: string[]) => item[0]).join("");
+
+      return translatedText;
+    } catch (error) {
+      console.error("Translation error:", error);
+      return fallbackTranslation(text, sourceLang, targetLang);
+    }
+  };
+
+  // Simple fallback translation for common Khmer food terms
+  const fallbackTranslation = (
+    text: string,
+    sourceLang: string,
+    targetLang: string
+  ): string => {
+    if (sourceLang !== "km" || targetLang !== "en") return text;
+
+    const commonTranslations: Record<string, string> = {
+      ស្ងាង: "Grilled",
+      បុក: "Pounded",
+      ឆាវ៉ាវ: "Stir-fried",
+      ចៀន: "Fried",
+      ស្ល: "Soup",
+      ពងទា: "Chicken Egg",
+      សាច់គោ: "Beef",
+      សាច់មាន់: "Chicken",
+      សាច់ជ្រូក: "Pork",
+      ត្រី: "Fish",
+      បង្គា: "Crab",
+      បង្អែម: "Sweet",
+      ភេសជ្ជៈ: "Drink",
+      កាហ្វេ: "Coffee",
+      ប៊ឺ: "Beer",
+      ទឹកដោះគោ: "Milk",
+      ទឹកផ្លែឈើ: "Juice",
+      បាយ: "Rice",
+      មី: "Noodles",
+      គុយទាវ: "Noodle Soup",
+      អាហារពេលព្រឹក: "Breakfast",
+      អាហារថ្ងៃត្រង់: "Lunch",
+      អាហារពេលល្ងាច: "Dinner",
+      សាឡាត: "Salad",
+      ស្តុង: "Steamed",
+    };
+
+    // Check if any common terms exist in the text
+    const words = text.split(" ");
+    const translatedWords = words.map((word) => {
+      const cleanedWord = word.replace(/[១២៣៤៥៦៧៨៩០.,!?]/g, "");
+      return commonTranslations[cleanedWord] || word;
+    });
+
+    return translatedWords.join(" ");
+  };
+
+  // Auto-translate Khmer to English when Khmer input changes
+  const handleKhmerInputChange = useDebounce(
+    async (field: "name" | "description", khmerText: string) => {
+      if (!khmerText.trim() || translating) return;
+
+      try {
+        setTranslating(true);
+
+        // Only translate if Khmer text has been entered
+        const hasKhmerCharacters = /[\u1780-\u17FF]/.test(khmerText);
+        if (!hasKhmerCharacters) {
+          setTranslating(false);
+          return;
+        }
+
+        const translatedText = await translateText(khmerText, "km", "en");
+
+        if (translatedText && translatedText.trim()) {
+          setFormData((prev) => ({
+            ...prev,
+            [`${field}_en`]: translatedText,
+          }));
+
+          // Show translation success notification
+          if (language === "en") {
+            console.log("Auto-translated successfully!");
+          } else {
+            console.log("បកប្រែស្វ័យប្រវត្តិដោយជោគជ័យ!");
+          }
+        }
+      } catch (error) {
+        console.error("Auto-translation failed:", error);
+      } finally {
+        setTranslating(false);
+      }
+    },
+    1000
+  ); // 1 second debounce
+
+  // Handle Khmer name input
+  const handleNameKhChange = (value: string) => {
+    setFormData((prev) => ({ ...prev, name_kh: value }));
+    handleKhmerInputChange("name", value);
+  };
+
+  // Handle Khmer description input
+  const handleDescriptionKhChange = (value: string) => {
+    setFormData((prev) => ({ ...prev, description_kh: value }));
+    handleKhmerInputChange("description", value);
+  };
 
   // Check screen size
   useEffect(() => {
@@ -355,6 +505,13 @@ export default function AdminMenuItemForm({
 
       <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
         {/* Enhanced Image Upload Section */}
+        <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-xl">
+          <p className="text-[14px] text-[#0E4123] font-bold text-center">
+            {language === "en"
+              ? "Type in Khmer, English will auto-fill"
+              : "វាយជាភាសាខ្មែរ ភាសាអង់គ្លេសនឹងបំពេញដោយស្វ័យប្រវត្តិ"}
+          </p>
+        </div>
         <div className="bg-gray-50 rounded-xl p-3 sm:p-4 border border-gray-200">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4">
             <label className="block text-sm font-semibold text-gray-700 mb-2 sm:mb-0">
@@ -528,9 +685,34 @@ export default function AdminMenuItemForm({
           </p>
         </div>
 
-        {/* Rest of the form remains the same */}
         {/* Name Fields */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1 sm:mb-2 pl-1">
+              {language === "en" ? "Name (Khmer)" : "ផលិតផល (ខ្មែរ)"}
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                required
+                style={{ fontSize: "16px" }}
+                value={formData.name_kh}
+                onChange={(e) => handleNameKhChange(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white placeholder-gray-400 text-sm sm:text-base pr-10"
+                placeholder={
+                  language === "en"
+                    ? "Enter Product Khmer"
+                    : "បញ្ចូលផលិតផលជាភាសាខ្មែរ"
+                }
+              />
+              {translating && (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              )}
+            </div>
+          </div>
+
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1 sm:mb-2 pl-1">
               {language === "en" ? "Name (English)" : "ផលិតផល (អង់គ្លេស)"}
@@ -546,29 +728,8 @@ export default function AdminMenuItemForm({
               className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white placeholder-gray-400 text-sm sm:text-base"
               placeholder={
                 language === "en"
-                  ? "Enter Product English"
-                  : "បញ្ចូលផលិតផលជាភាសាអង់គ្លេស"
-              }
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1 sm:mb-2 pl-1">
-              {language === "en" ? "Product (Khmer)" : "ផលិតផល (ខ្មែរ)"}
-            </label>
-            <input
-              type="text"
-              required
-              style={{ fontSize: "16px" }}
-              value={formData.name_kh}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, name_kh: e.target.value }))
-              }
-              className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white placeholder-gray-400 text-sm sm:text-base"
-              placeholder={
-                language === "en"
-                  ? "Enter Product Khmer"
-                  : "បញ្ចូលផលិតផលជាភាសាខ្មែរ"
+                  ? "Auto-filled from Khmer or enter manually"
+                  : "បំពេញដោយស្វ័យប្រវត្តិពីភាសាខ្មែរ ឬបញ្ចូលដោយដៃ"
               }
             />
           </div>
@@ -576,6 +737,31 @@ export default function AdminMenuItemForm({
 
         {/* Description Fields */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1 sm:mb-2 pl-1">
+              {language === "en" ? "Description (Khmer)" : "ពិពណ៌នា (ខ្មែរ)"}
+            </label>
+            <div className="relative">
+              <textarea
+                value={formData.description_kh}
+                onChange={(e) => handleDescriptionKhChange(e.target.value)}
+                rows={isMobile ? 2 : 3}
+                style={{ fontSize: "16px" }}
+                className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white placeholder-gray-400 resize-none text-sm sm:text-base pr-10"
+                placeholder={
+                  language === "en"
+                    ? "Enter Khmer description"
+                    : "បញ្ចូលការពិពណ៌នាជាភាសាខ្មែរ"
+                }
+              />
+              {translating && (
+                <div className="absolute right-3 top-3">
+                  <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              )}
+            </div>
+          </div>
+
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1 sm:mb-2 pl-1">
               {language === "en"
@@ -595,31 +781,8 @@ export default function AdminMenuItemForm({
               className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white placeholder-gray-400 resize-none text-sm sm:text-base"
               placeholder={
                 language === "en"
-                  ? "Enter English description"
-                  : "បញ្ចូលការពិពណ៌នាជាភាសាអង់គ្លេស"
-              }
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1 sm:mb-2 pl-1">
-              {language === "en" ? "Description (Khmer)" : "ពិពណ៌នា (ខ្មែរ)"}
-            </label>
-            <textarea
-              value={formData.description_kh}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  description_kh: e.target.value,
-                }))
-              }
-              rows={isMobile ? 2 : 3}
-              style={{ fontSize: "16px" }}
-              className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white placeholder-gray-400 resize-none text-sm sm:text-base"
-              placeholder={
-                language === "en"
-                  ? "Enter Khmer description"
-                  : "បញ្ចូលការពិពណ៌នាជាភាសាខ្មែរ"
+                  ? "Auto-filled from Khmer or enter manually"
+                  : "បំពេញដោយស្វ័យប្រវត្តិពីភាសាខ្មែរ ឬបញ្ចូលដោយដៃ"
               }
             />
           </div>
@@ -719,7 +882,7 @@ export default function AdminMenuItemForm({
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 pt-3 sm:pt-4">
           <button
             type="submit"
-            disabled={loading || uploading}
+            disabled={loading || uploading || translating}
             className="flex-1 flex items-center justify-center gap-2 bg-[#0E4123] text-white px-3 py-2 rounded-xl hover:from-[#2F2F2F] hover:to-[#1F1F1F] focus:outline-none focus:ring-2 focus:ring-[#3F3F3F] focus:ring-offset-2 disabled:opacity-50 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl font-semibold text-sm sm:text-base"
           >
             {loading ? (
@@ -768,7 +931,7 @@ export default function AdminMenuItemForm({
             <button
               type="button"
               onClick={onCancel}
-              disabled={loading || uploading}
+              disabled={loading || uploading || translating}
               className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-br from-gray-300 to-gray-400 text-gray-700 py-2.5 sm:py-3.5 px-4 sm:px-6 rounded-xl hover:from-gray-400 hover:to-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl font-semibold text-sm sm:text-base"
             >
               <svg

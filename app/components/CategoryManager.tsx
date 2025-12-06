@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { createClient } from "../../lib/supabase-client";
 import { Category } from "../data/types";
 import { useLanguage } from "../context/LanguageContext";
@@ -24,11 +24,149 @@ export default function CategoryManager({
   const [screenSize, setScreenSize] = useState<"mobile" | "tablet" | "desktop">(
     "desktop"
   );
+  const [translating, setTranslating] = useState(false);
 
   // Ref for auto-scrolling to form
   const formRef = useRef<HTMLFormElement>(null);
 
   const supabase = createClient();
+
+  // Custom debounce hook for translation
+  const useDebounce = <T extends unknown[]>(
+    callback: (...args: T) => void,
+    delay: number
+  ) => {
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    return useCallback(
+      (...args: T) => {
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+        }
+        timeoutRef.current = setTimeout(() => {
+          callback(...args);
+        }, delay);
+      },
+      [callback, delay]
+    );
+  };
+
+  // Translation function using Google Translate API
+  const translateText = async (
+    text: string,
+    sourceLang: string = "km",
+    targetLang: string = "en"
+  ): Promise<string> => {
+    try {
+      if (!text.trim()) return "";
+
+      // Free method using Google Translate (no API key required)
+      const response = await fetch(
+        `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLang}&tl=${targetLang}&dt=t&q=${encodeURIComponent(
+          text
+        )}`
+      );
+
+      if (!response.ok) {
+        throw new Error(`Translation failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      // Extract translated text
+      const translatedText = data[0].map((item: string[]) => item[0]).join("");
+
+      return translatedText;
+    } catch (error) {
+      console.error("Translation error:", error);
+      return fallbackTranslation(text, sourceLang, targetLang);
+    }
+  };
+
+  // Simple fallback translation for common Khmer food category terms
+  const fallbackTranslation = (
+    text: string,
+    sourceLang: string,
+    targetLang: string
+  ): string => {
+    if (sourceLang !== "km" || targetLang !== "en") return text;
+
+    const commonTranslations: Record<string, string> = {
+      អាហារពេលព្រឹក: "Breakfast",
+      អាហារថ្ងៃត្រង់: "Lunch",
+      អាហារពេលល្ងាច: "Dinner",
+      បង្អែម: "Dessert",
+      ភេសជ្ជៈ: "Drinks",
+      កាហ្វេ: "Coffee",
+      ប៊ឺ: "Beer",
+      ស្រា: "Wine",
+      សាឡាត: "Salads",
+      ស៊ុប: "Soups",
+      អាហារសមុទ្រ: "Seafood",
+      អាហារបង្អែម: "Desserts",
+      អាហាររហ័ស: "Fast Food",
+      អាហារវៀតណាម: "Vietnamese Food",
+      អាហារចិន: "Chinese Food",
+      អាហារកូរ៉េ: "Korean Food",
+      អាហារជប៉ុន: "Japanese Food",
+      អាហារថៃ: "Thai Food",
+      អាហារខ្មែរ: "Khmer Food",
+      អាហារសុខភាព: "Healthy Food",
+      អាហារបួស: "Vegetarian",
+      អាហារសម្រាប់កូន: "Kids Menu",
+    };
+
+    // Check if any common terms exist in the text
+    const words = text.split(" ");
+    const translatedWords = words.map((word) => {
+      const cleanedWord = word.replace(/[១២៣៤៥៦៧៨៩០.,!?]/g, "");
+      return commonTranslations[cleanedWord] || word;
+    });
+
+    return translatedWords.join(" ");
+  };
+
+  // Auto-translate Khmer to English when Khmer input changes
+  const handleKhmerInputChange = useDebounce(async (khmerText: string) => {
+    if (!khmerText.trim() || translating) return;
+
+    try {
+      setTranslating(true);
+
+      // Only translate if Khmer text has been entered
+      const hasKhmerCharacters = /[\u1780-\u17FF]/.test(khmerText);
+      if (!hasKhmerCharacters) {
+        setTranslating(false);
+        return;
+      }
+
+      const translatedText = await translateText(khmerText, "km", "en");
+
+      if (translatedText && translatedText.trim()) {
+        setFormData((prev) => ({
+          ...prev,
+          name_en: translatedText,
+        }));
+
+        // Show translation success notification
+        if (language === "en") {
+          console.log("Auto-translated category successfully!");
+        } else {
+          console.log("បកប្រែប្រភេទស្វ័យប្រវត្តិដោយជោគជ័យ!");
+        }
+      }
+    } catch (error) {
+      console.error("Auto-translation failed:", error);
+    } finally {
+      setTranslating(false);
+    }
+  }, 1000); // 1 second debounce
+
+  // Handle Khmer name input
+  const handleNameKhChange = (value: string) => {
+    setFormData((prev) => ({ ...prev, name_kh: value }));
+    handleKhmerInputChange(value);
+  };
 
   // Check screen size
   useEffect(() => {
@@ -249,6 +387,17 @@ export default function CategoryManager({
         </button>
       </div>
 
+      {/* Auto-translation hint */}
+      {showForm && (
+        <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-xl">
+          <p className="text-[14px] text-[#0E4123] font-bold text-center">
+            {language === "en"
+              ? "Type in Khmer, English will auto-fill"
+              : "វាយជាភាសាខ្មែរ ភាសាអង់គ្លេសនឹងបំពេញដោយស្វ័យប្រវត្តិ"}
+          </p>
+        </div>
+      )}
+
       {/* Category Form with ref */}
       {showForm && (
         <form
@@ -258,7 +407,7 @@ export default function CategoryManager({
         >
           <div className="flex justify-between items-center mb-4">
             <h4 className="font-bold text-lg text-gray-900 flex items-center gap-2">
-              <div className="w-6 h-6 bg-blue-500 rounded-lg flex items-center justify-center text-white text-sm">
+              <div className="w-6 h-6 bg-[#0E4123] rounded-lg flex items-center justify-center text-white text-sm">
                 {editingCategory ? "✏️" : "➕"}
               </div>
               {editingCategory
@@ -283,7 +432,31 @@ export default function CategoryManager({
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2 pl-1">
                 {language === "en"
-                  ? "Name Product  (English)"
+                  ? "Name Product (Khmer)"
+                  : "ឈ្មោះ ផលិតផល (ខ្មែរ)"}
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  required
+                  value={formData.name_kh}
+                  onChange={(e) => handleNameKhChange(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white placeholder-gray-400 pr-10"
+                  placeholder="បញ្ចូលផលិតផល"
+                  style={{ fontSize: "16px" }}
+                />
+                {translating && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2 pl-1">
+                {language === "en"
+                  ? "Name Product (English)"
                   : "ឈ្មោះ ផលិតផល (អង់គ្លេស)"}
               </label>
               <input
@@ -294,26 +467,11 @@ export default function CategoryManager({
                   setFormData((prev) => ({ ...prev, name_en: e.target.value }))
                 }
                 className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white placeholder-gray-400"
-                placeholder="Enter Product"
-                style={{ fontSize: "16px" }}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2 pl-1">
-                {language === "en"
-                  ? "Name Product (Khmer)"
-                  : "ឈ្មោះ ផលិតផល (ខ្មែរ)"}
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.name_kh}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, name_kh: e.target.value }))
+                placeholder={
+                  language === "en"
+                    ? "Auto-filled from Khmer or enter manually"
+                    : "បំពេញដោយស្វ័យប្រវត្តិពីភាសាខ្មែរ ឬបញ្ចូលដោយដៃ"
                 }
-                className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white placeholder-gray-400"
-                placeholder="បញ្ចូលផលិតផល"
                 style={{ fontSize: "16px" }}
               />
             </div>
@@ -322,7 +480,7 @@ export default function CategoryManager({
           <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || translating}
               className="flex items-center justify-center gap-2 bg-[#0E4123] text-white px-3 py-2 rounded-xl hover:from-[#2F2F2F] hover:to-[#1F1F1F] transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl disabled:opacity-50 font-semibold flex-1"
             >
               {loading ? (
@@ -372,7 +530,8 @@ export default function CategoryManager({
             <button
               type="button"
               onClick={resetForm}
-              className="flex items-center justify-center gap-2 bg-gradient-to-br from-gray-300 to-gray-400 text-gray-700 px-3 py-2 rounded-xl hover:from-gray-400 hover:to-gray-500 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl font-semibold flex-1"
+              disabled={translating}
+              className="flex items-center justify-center gap-2 bg-gradient-to-br from-gray-300 to-gray-400 text-gray-700 px-3 py-2 rounded-xl hover:from-gray-400 hover:to-gray-500 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl font-semibold flex-1 disabled:opacity-50"
             >
               <svg
                 className="w-4 h-4"
