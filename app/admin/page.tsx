@@ -4,6 +4,10 @@ import LoginForm from "../components/LoginForm";
 import AdminDashboard from "../components/AdminDashboard";
 import { useLanguage } from "../context/LanguageContext";
 
+// Add these exports to disable static generation and force dynamic rendering
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default function AdminPage() {
   const { user, loading } = useAuth();
   const { language } = useLanguage();
