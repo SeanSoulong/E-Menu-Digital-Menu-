@@ -18,10 +18,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  eslint: {
-    // ignore ESLint errors during production build (optional)
-    ignoreDuringBuilds: true,
-  },
   typescript: {
     // allow build even if TS errors exist (optional)
     ignoreBuildErrors: true,
