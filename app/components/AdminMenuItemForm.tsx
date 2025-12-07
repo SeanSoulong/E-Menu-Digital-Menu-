@@ -489,7 +489,7 @@ export default function AdminMenuItemForm({
     <div className="bg-white rounded-2xl shadow-lg p-3 sm:p-4 md:p-6 border border-gray-100 font-[Kantumruy_Pro]">
       {/* Header */}
       <div className="flex items-center gap-3 mb-4 sm:mb-6">
-        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#0E4123] rounded-xl flex items-center justify-center text-white font-bold text-sm sm:text-base">
+        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#70A2EB] rounded-xl flex items-center justify-center text-white font-bold text-sm sm:text-base">
           {editingItem ? "✏️" : "➕"}
         </div>
         <h2 className="text-lg sm:text-xl font-bold text-gray-900">
@@ -506,7 +506,7 @@ export default function AdminMenuItemForm({
       <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
         {/* Enhanced Image Upload Section */}
         <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-xl">
-          <p className="text-[14px] text-[#0E4123] font-bold text-center">
+          <p className="text-[14px] text-[#70A2EB] font-bold text-center">
             {language === "en"
               ? "Type in Khmer, English will auto-fill"
               : "វាយជាភាសាខ្មែរ ភាសាអង់គ្លេសនឹងបំពេញដោយស្វ័យប្រវត្តិ"}
@@ -883,7 +883,7 @@ export default function AdminMenuItemForm({
           <button
             type="submit"
             disabled={loading || uploading || translating}
-            className="flex-1 flex items-center justify-center gap-2 bg-[#0E4123] text-white px-3 py-2 rounded-xl hover:from-[#2F2F2F] hover:to-[#1F1F1F] focus:outline-none focus:ring-2 focus:ring-[#3F3F3F] focus:ring-offset-2 disabled:opacity-50 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl font-semibold text-sm sm:text-base"
+            className="flex-1 flex items-center justify-center gap-2 bg-[#70A2EB] text-white px-3 py-2 rounded-xl hover:from-[#2F2F2F] hover:to-[#1F1F1F] focus:outline-none focus:ring-2 focus:ring-[#3F3F3F] focus:ring-offset-2 disabled:opacity-50 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl font-semibold text-sm sm:text-base"
           >
             {loading ? (
               <>

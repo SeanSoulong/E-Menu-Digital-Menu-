@@ -34,13 +34,11 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-[Kantumruy_Pro] p-4">
+    <div className="min-h-screen bg-[#E5E7EB] flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-[Kantumruy_Pro] p-4">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         {/* Logo/Brand Section */}
         <div className="flex justify-center">
-          <div className="w-16 h-16 bg-[#0E4123] rounded-2xl flex items-center justify-center text-white text-2xl font-bold">
-            E
-          </div>
+          <img src="/logo.svg" alt="logo" className="w-12 h-12  rounded-xl" />
         </div>
 
         <h2 className="mt-6 text-center text-3xl font-bold text-gray-900 tracking-tight">
@@ -89,7 +87,7 @@ export default function LoginForm() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full px-4 py-3 border border-gray-200 rounded-xl placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3F3F3F] focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                  className="block w-full px-4 py-3 border border-gray-200 rounded-xl placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#70A2EB] focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
                   placeholder="example@gmail.com"
                 />
                 <div className="absolute inset-y-0 right-0 flex items-center pr-3">
@@ -121,7 +119,7 @@ export default function LoginForm() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full px-4 py-3 pr-10 border border-gray-200 rounded-xl placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3F3F3F] focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                  className="block w-full px-4 py-3 pr-10 border border-gray-200 rounded-xl placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#70A2EB] focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
                   placeholder="••••••••"
                 />
                 <div className="absolute inset-y-0 right-0 flex items-center pr-3">
@@ -183,7 +181,7 @@ export default function LoginForm() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-semibold text-white bg-[#0E4123] hover:bg-[#2F2F2F] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3F3F3F] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.99]"
+                className="w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-semibold text-white bg-[#70A2EB] hover:bg-[#2F2F2F] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#70A2EB] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.99]"
               >
                 {loading ? (
                   <>

@@ -8,7 +8,7 @@ export default function LanguageSwitcher() {
         onClick={() => setLanguage("en")}
         className={`p-2.5 rounded-xl transition-all duration-200 transform hover:scale-105 font-semibold ${
           language === "en"
-            ? "bg-[#0E4123] text-white shadow-lg"
+            ? "bg-[#70A2EB] text-white shadow-lg"
             : "bg-white text-gray-600 hover:bg-gray-50 shadow-md"
         }`}
       >
@@ -18,7 +18,7 @@ export default function LanguageSwitcher() {
         onClick={() => setLanguage("kh")}
         className={`p-2.5 rounded-xl transition-all duration-200 transform hover:scale-105 font-semibold ${
           language === "kh"
-            ? "bg-[#0E4123] text-white shadow-lg"
+            ? "bg-[#70A2EB] text-white shadow-lg"
             : "bg-white text-gray-600 hover:bg-gray-50 shadow-md"
         }`}
       >

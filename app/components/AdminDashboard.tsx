@@ -339,7 +339,7 @@ export default function AdminDashboard() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center font-[Kantumruy_Pro]">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-[#3F3F3F] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-16 h-16 border-4 border-[#70A2EB] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <div className="text-lg text-gray-600">
             {language === "en" ? "Loading..." : "កំពុងផ្ទុក..."}
           </div>
@@ -388,12 +388,14 @@ export default function AdminDashboard() {
         </div>
 
         {/* Main Dashboard Header */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 md:mb-8 p-4 md:p-6 bg-white rounded-2xl shadow-lg border border-gray-100">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 md:mb-8 p-4 md:p-6 bg-[#E5E7EB] rounded-2xl shadow-lg border border-gray-100">
           <div className="mb-4 lg:mb-0">
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 md:w-12 md:h-12 bg-[#0E4123] rounded-xl flex items-center justify-center text-white font-bold text-sm md:text-lg">
-                E
-              </div>
+              <img
+                src="/logo.svg"
+                alt="logo"
+                className="w-12 h-12  rounded-xl"
+              />
               <div>
                 <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 tracking-tight">
                   {language === "en" ? "Admin Panel" : "ផ្ទាំងគ្រប់គ្រង"}
@@ -512,7 +514,7 @@ export default function AdminDashboard() {
                     {language === "en" ? "Menu Items" : "ធាតុមីនុយ"}
                   </h2>
                   <div className="flex items-center gap-3">
-                    <span className="bg-[#0E4123]  text-white px-2 md:px-3 py-1 rounded-full text-xs md:text-sm font-medium">
+                    <span className="bg-[#70A2EB]  text-white px-2 md:px-3 py-1 rounded-full text-xs md:text-sm font-medium">
                       {filteredItems.length}/{menuItems.length}{" "}
                       {language === "en" ? "items" : "ធាតុ"}
                     </span>
