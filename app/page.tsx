@@ -145,7 +145,7 @@ export default function HomePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#E5E7EB] flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-lg">
           {language === "en" ? "Loading menu..." : "កំពុងផ្ទុកមីនុយ..."}
         </div>
@@ -154,7 +154,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#E5E7EB] p-4">
+    <div className="min-h-screen bg-white p-4">
       <div
         className={`flex flex-col lg:flex-row transition-opacity ${
           isPopupOpen ? "opacity-20" : ""

@@ -28,14 +28,14 @@ export default function ProductCard({ product, onClick }: Props) {
 
         {/* Out of Stock Badge - Top Right */}
         {!product.is_available && (
-          <div className="absolute top-2 right-2 bg-[#70A2EB] text-white px-2 py-1 rounded text-xs font-medium">
+          <div className="absolute top-2 right-2 bg-[#0E4123] text-white px-2 py-1 rounded text-xs font-medium">
             {language === "en" ? "Out of Stock" : "អស់ស្តុក"}
           </div>
         )}
 
         {/* New Arrival Badge - Bottom Left */}
         {product.is_available && product.is_new_arrival && (
-          <div className="absolute top-2 left-2 bg-[#70A2EB] text-white px-2 py-1 rounded text-xs font-medium">
+          <div className="absolute top-2 left-2 bg-[#0E4123] text-white px-2 py-1 rounded text-xs font-medium">
             {language === "en" ? "New" : "ថ្មី"}
           </div>
         )}

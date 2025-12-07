@@ -16,9 +16,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 export const metadata: Metadata = {
-  title: "BE | MENU",
+  title: "EMOJI | MENU",
   description:
-    "Admin panel for Emoji . Manage menu items, categories, and orders with ease.",
+    "Admin panel for Emoji Restaurant. Manage menu items, categories, and orders with ease.",
 };
 
 export default function RootLayout({
@@ -28,7 +28,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <link rel="shortcut icon" href="/logo-web.svg" type="image/x-icon" />
+      <link rel="shortcut icon" href="/logo.png" type="image/x-icon" />
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

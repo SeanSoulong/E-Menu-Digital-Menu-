@@ -4,11 +4,12 @@ import Image from "next/image";
 import {
   FaTimes,
   FaFacebookF,
+  FaTelegramPlane,
   FaMapMarkerAlt,
   FaPhoneAlt,
   FaExclamationTriangle,
-  FaInstagram,
-  FaTiktok,
+  FaShoppingCart,
+  FaWhatsapp,
 } from "react-icons/fa";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
@@ -29,12 +30,10 @@ export default function ProductDetailPopup({
 
   if (!product) return null;
 
-  const facebookUrl = "https://www.facebook.com/profile.php?id=61581383279455";
-  const instagramUrl =
-    "https://www.instagram.com/be_badminton?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==";
-  const mapUrl =
-    "https://www.google.com/maps?q=Russei+Keo,+Phnom+Penh,+Cambodia+12100&hl=en";
-  const tiktokUrl = "https://www.tiktok.com/@be_withu3";
+  const facebookUrl = "https://www.facebook.com/profile.php?id=100004264842600";
+  const telegramUrl = "https://t.me/sothimaktey";
+  const mapUrl = "https://maps.app.goo.gl/9xi5jv778zCMV5gs8";
+  const phoneUrl = `tel:${product.contact || "098253453"}`;
 
   // Create WhatsApp message
   const whatsappMessage = encodeURIComponent(
@@ -92,7 +91,7 @@ export default function ProductDetailPopup({
                     />
                     {/* Out of Stock Overlay on Image */}
                     {!product.is_available && (
-                      <div className="absolute top-4 right-4 bg-[#70A2EB] text-white px-3 py-1 rounded-lg text-sm font-bold">
+                      <div className="absolute top-4 right-4 bg-[#0E4123] text-white px-3 py-1 rounded-lg text-sm font-bold">
                         {language === "en" ? "Out of Stock" : "អស់ស្តុក"}
                       </div>
                     )}
@@ -175,13 +174,13 @@ export default function ProductDetailPopup({
                   <FaFacebookF size={16} className="md:w-4 md:h-4" />
                 </a>
                 <a
-                  href={instagramUrl}
+                  href={telegramUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="bg-blue-400 text-white p-2 md:p-3 rounded-xl hover:bg-blue-500 transition-all duration-200 transform hover:scale-110 shadow-lg flex items-center justify-center"
-                  aria-label="instagram Account"
+                  aria-label="Telegram Account"
                 >
-                  <FaInstagram size={16} className="md:w-4 md:h-4" />
+                  <FaTelegramPlane size={16} className="md:w-4 md:h-4" />
                 </a>
                 <a
                   href={mapUrl}
@@ -193,12 +192,14 @@ export default function ProductDetailPopup({
                   <FaMapMarkerAlt size={16} className="md:w-4 md:h-4" />
                 </a>
                 <a
-                  href={tiktokUrl}
-                  target="_blank"
+                  href={phoneUrl}
                   className="bg-red-600 text-white p-2 md:p-3 rounded-xl hover:bg-red-700 transition-all duration-200 transform hover:scale-110 shadow-lg flex items-center gap-1 md:gap-2"
                   aria-label="Call Us"
                 >
-                  <FaTiktok size={14} className="md:w-4 md:h-4" />
+                  <FaPhoneAlt size={14} className="md:w-4 md:h-4" />
+                  <span className="text-xs md:text-sm font-semibold truncate max-w-[80px] md:max-w-[100px]">
+                    {product.contact}
+                  </span>
                 </a>
               </div>
               <p className="text-xs text-gray-500 mt-3">

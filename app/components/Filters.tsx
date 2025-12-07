@@ -33,14 +33,16 @@ export default function Filters({
 
   return (
     <div
-      className="w-full lg:w-1/4 p-4 lg:p-6  bg-[#E5E7EB] border-b lg:border-r lg:border-b-0 border-gray-300 font-[Kantumruy_Pro] sticky top-0 z-40  backdrop-blur-md  lg:static
+      className="w-full lg:w-1/4 p-4 lg:p-6  from-white to-gray-50 border-b lg:border-r lg:border-b-0 border-gray-200 font-[Kantumruy_Pro] sticky top-0 z-40 bg-white/80 backdrop-blur-md  lg:static
 "
     >
       <div className="flex items-center mb-4 lg:mb-8 w-full justify-between">
         <div className="flex items-center gap-3">
-          <img src="/logo.svg" alt="logo" className="w-12 h-12  rounded-xl" />
+          <div className="w-12 h-12 bg-[#0E4123] rounded-xl flex items-center justify-center text-white font-bold text-lg">
+            E
+          </div>
           <div>
-            <p className="text-[16px]  font-bold text-gray-900">Be-Menu</p>
+            <p className="text-[16px]  font-bold text-gray-900">Emoji-Menu</p>
             <p className="text-xs text-gray-500 font-[15px]">
               {language === "en" ? "Premium Products" : "ផលិតផលគុណភាពខ្ពស់"}
             </p>
@@ -63,7 +65,7 @@ export default function Filters({
             value={searchQuery}
             onChange={handleInputChange}
             style={{ fontSize: "16px" }}
-            className="w-full pl-12 pr-10 py-1.5 border-2 text-[14px] font-normal border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#70A2EB] focus:border-transparent bg-white transition-all duration-200 placeholder-gray-400"
+            className="w-full pl-12 pr-10 py-1.5 border-2 text-[14px] font-normal border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3F3F3F] focus:border-transparent bg-white transition-all duration-200 placeholder-gray-400"
           />
           {searchQuery && (
             <button
@@ -102,7 +104,7 @@ export default function Filters({
               onClick={() => onFilter("All")}
               className={`flex items-center gap-3 w-full text-left px-4 py-3 rounded-xl transition-all duration-200 font-semibold ${
                 activeCategory === "All"
-                  ? "bg-[#70A2EB] text-white shadow-lg"
+                  ? "bg-[#0E4123] text-white shadow-lg"
                   : "text-gray-700 hover:bg-gray-100 hover:shadow-md"
               }`}
             >
@@ -120,7 +122,7 @@ export default function Filters({
                 onClick={() => onFilter(cat.en)}
                 className={`flex items-center gap-3 w-full text-left px-4 py-3 rounded-xl transition-all duration-200 font-semibold ${
                   activeCategory === cat.en
-                    ? "bg-[#70A2EB] text-white shadow-lg"
+                    ? "bg-[#0E4123] text-white shadow-lg"
                     : "text-gray-700 hover:bg-gray-100 hover:shadow-md"
                 }`}
               >
@@ -144,9 +146,9 @@ export default function Filters({
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide text-[12px]">
           <button
             onClick={() => onFilter("All")}
-            className={`px-3 py-2 border-2 border-white rounded-xl whitespace-nowrap transition-all duration-200 font-semibold ${
+            className={`px-3 py-2 border-2 rounded-xl whitespace-nowrap transition-all duration-200 font-semibold ${
               activeCategory === "All"
-                ? "bg-[#70A2EB] text-white border-transparent shadow-lg"
+                ? "bg-[#0E4123] text-white border-transparent shadow-lg"
                 : "border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300"
             }`}
           >
@@ -156,9 +158,9 @@ export default function Filters({
             <button
               key={cat.en}
               onClick={() => onFilter(cat.en)}
-              className={`px-4 py-2 border-2 rounded-xl border-white whitespace-nowrap transition-all duration-200 font-semibold ${
+              className={`px-4 py-2 border-2 rounded-xl whitespace-nowrap transition-all duration-200 font-semibold ${
                 activeCategory === cat.en
-                  ? "bg-[#70A2EB] text-white border-transparent shadow-lg"
+                  ? "bg-[#0E4123] text-white border-transparent shadow-lg"
                   : "border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300"
               }`}
             >

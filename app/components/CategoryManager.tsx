@@ -329,7 +329,7 @@ export default function CategoryManager({
     <div className="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-gray-100 font-[Kantumruy_Pro] hover-card">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
         <div className="flex items-center gap-3 mb-4 sm:mb-0">
-          <div className="w-10 h-10 bg-[#70A2EB] rounded-xl flex items-center justify-center text-white font-bold">
+          <div className="w-10 h-10 bg-[#0E4123] rounded-xl flex items-center justify-center text-white font-bold">
             📁
           </div>
           <div>
@@ -347,7 +347,7 @@ export default function CategoryManager({
             setEditingCategory(null);
             setFormData({ name_en: "", name_kh: "" });
           }}
-          className="flex items-center gap-2 bg-[#70A2EB] text-white px-3 py-2 rounded-xl hover:from-[#2F2F2F] hover:to-[#1F1F1F] transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl font-semibold"
+          className="flex items-center gap-2 bg-[#0E4123] text-white px-3 py-2 rounded-xl hover:from-[#2F2F2F] hover:to-[#1F1F1F] transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl font-semibold"
         >
           {showForm ? (
             <>
@@ -390,7 +390,7 @@ export default function CategoryManager({
       {/* Auto-translation hint */}
       {showForm && (
         <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-xl">
-          <p className="text-[14px] text-[#70A2EB] font-bold text-center">
+          <p className="text-[14px] text-[#0E4123] font-bold text-center">
             {language === "en"
               ? "Type in Khmer, English will auto-fill"
               : "វាយជាភាសាខ្មែរ ភាសាអង់គ្លេសនឹងបំពេញដោយស្វ័យប្រវត្តិ"}
@@ -407,7 +407,7 @@ export default function CategoryManager({
         >
           <div className="flex justify-between items-center mb-4">
             <h4 className="font-bold text-lg text-gray-900 flex items-center gap-2">
-              <div className="w-6 h-6 bg-[#70A2EB] rounded-lg flex items-center justify-center text-white text-sm">
+              <div className="w-6 h-6 bg-[#0E4123] rounded-lg flex items-center justify-center text-white text-sm">
                 {editingCategory ? "✏️" : "➕"}
               </div>
               {editingCategory
@@ -481,7 +481,7 @@ export default function CategoryManager({
             <button
               type="submit"
               disabled={loading || translating}
-              className="flex items-center justify-center gap-2 bg-[#70A2EB] text-white px-3 py-2 rounded-xl hover:from-[#2F2F2F] hover:to-[#1F1F1F] transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl disabled:opacity-50 font-semibold flex-1"
+              className="flex items-center justify-center gap-2 bg-[#0E4123] text-white px-3 py-2 rounded-xl hover:from-[#2F2F2F] hover:to-[#1F1F1F] transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl disabled:opacity-50 font-semibold flex-1"
             >
               {loading ? (
                 <>
