@@ -409,6 +409,7 @@ export default function AdminDashboard() {
           <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
             <Link
               href="/"
+              target="_blank"
               className="flex items-center justify-center gap-2 bg-white text-gray-700 px-3 py-2 rounded-xl hover:bg-gray-50 transition-all duration-200 border border-gray-200 hover:border-gray-300 hover:shadow-md font-medium text-sm md:text-base"
             >
               <svg

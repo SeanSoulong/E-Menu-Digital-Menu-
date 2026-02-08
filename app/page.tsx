@@ -175,7 +175,7 @@ export default function HomePage() {
             <div className="text-sm text-gray-600">
               {language === "en"
                 ? `${filteredProducts.length} items found`
-                : `បានរកឃើញ ${filteredProducts.length} ធាតុ`}
+                : `ទំនិញ ${filteredProducts.length} មុខ`}
             </div>
           </div>
 

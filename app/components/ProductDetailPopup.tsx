@@ -114,8 +114,8 @@ export default function ProductDetailPopup({
                 </div>
                 <p className="text-red-600 text-sm">
                   {language === "en"
-                    ? "This item is currently unavailable for ordering. You can still view details or contact us for more information."
-                    : "ផលិតផលនេះមិនអាចបញ្ជាទិញបាននាពេលនេះទេ។ អ្នកនៅតែអាចមើលព័ត៌មានលម្អិត ឬទាក់ទងមកយើងខ្ញុំសម្រាប់ព័ត៌មានបន្ថែម។"}
+                    ? "This item is currently unavailable for ordering. You can contact us to pre-order."
+                    : "ផលិតផលនេះមិនអាចបញ្ជាទិញបាននាពេលនេះទេ។ អ្នកអាចទាក់ទងមកពួកយើងដើម្បីធ្វើការ​ pre-order បាន។"}
                 </p>
               </div>
             )}
@@ -161,7 +161,9 @@ export default function ProductDetailPopup({
             {/* Contact / Social */}
             <div className="mt-auto pt-4 md:pt-6 border-t border-gray-200">
               <p className="text-sm font-semibold text-gray-700 mb-3 md:mb-4">
-                {language === "en" ? "Contact us:" : "ទំនាក់ទំនងពួកយើង៖"}
+                {language === "en"
+                  ? "Contact us:"
+                  : "បញ្ជាទិញដោយទំនាក់ទំនងពួកយើង៖"}
               </p>
               <div className="flex flex-wrap items-center gap-2 md:gap-3">
                 <a
