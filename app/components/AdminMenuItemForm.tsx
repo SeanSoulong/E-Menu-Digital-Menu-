@@ -41,6 +41,73 @@ export default function AdminMenuItemForm({
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
 
+  // NEW: image URL input state (allow add by URL)
+  const [imageUrlInput, setImageUrlInput] = useState("");
+
+  // NEW: basic URL + image extension check
+  const isValidImageUrl = (url: string) => {
+    try {
+      const u = new URL(url);
+      const pathname = u.pathname.toLowerCase();
+      const hasImageExt = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(pathname);
+      return (
+        u.protocol.startsWith("http") && (hasImageExt || pathname.length > 1)
+      );
+    } catch {
+      return false;
+    }
+  };
+
+  // NEW: add image URL into images[] (max 3)
+  const addImageUrlToGallery = () => {
+    const url = imageUrlInput.trim();
+
+    if (!url) {
+      alert(
+        language === "en" ? "Please paste an image URL" : "សូមបញ្ចូល URL រូបភាព"
+      );
+      return;
+    }
+
+    if (!isValidImageUrl(url)) {
+      alert(
+        language === "en"
+          ? "Invalid image URL. Please use a valid http/https image link."
+          : "URL រូបភាពមិនត្រឹមត្រូវ។ សូមប្រើតំណរភ្ជាប់រូបភាព http/https ដែលត្រឹមត្រូវ។"
+      );
+      return;
+    }
+
+    if (formData.images.includes(url)) {
+      alert(
+        language === "en"
+          ? "This image URL is already added"
+          : "URL រូបភាពនេះបានបន្ថែមរួចហើយ"
+      );
+      return;
+    }
+
+    if (formData.images.length >= 3) {
+      alert(
+        language === "en"
+          ? "Maximum 3 images allowed."
+          : "អនុញ្ញាតអោយមានរូបភាពអតិបរមា ៣។"
+      );
+      return;
+    }
+
+    setFormData((prev) => {
+      const nextImages = [...prev.images, url];
+      return {
+        ...prev,
+        images: nextImages,
+        image_url: prev.image_url || url,
+      };
+    });
+
+    setImageUrlInput("");
+  };
+
   // Custom debounce hook
   const useDebounce = <T extends unknown[]>(
     callback: (...args: T) => void,
@@ -446,7 +513,7 @@ export default function AdminMenuItemForm({
       alert(
         language === "en"
           ? `Error saving item: ${errorMessage}`
-          : `កំហុសក្នុងការរក្សាទុកធាតុ: ${errorMessage}`
+          : `កំហស​ក្នុងការរក្សាទុកធាតុ: ${errorMessage}`
       );
     } finally {
       setLoading(false);
@@ -557,6 +624,54 @@ export default function AdminMenuItemForm({
               </div>
             </div>
           )}
+
+          {/* NEW: Image URL Input */}
+          <div className="mt-3 sm:mt-4 mb-4">
+            <label className="block text-xs font-semibold text-gray-700 mb-2">
+              {language === "en" ? "Add Image URL" : "បន្ថែម URL រូបភាព"}
+            </label>
+
+            <div className="flex-col gap-2 ">
+              <input
+                type="url"
+                value={imageUrlInput}
+                onChange={(e) => setImageUrlInput(e.target.value)}
+                placeholder={
+                  language === "en"
+                    ? "https://example.com/image.jpg"
+                    : "https://example.com/image.jpg"
+                }
+                style={{ fontSize: "16px" }}
+                className="flex-1 px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-sm"
+                disabled={
+                  loading ||
+                  uploading ||
+                  translating ||
+                  formData.images.length >= 3
+                }
+              />
+
+              <button
+                type="button"
+                onClick={addImageUrlToGallery}
+                disabled={
+                  loading ||
+                  uploading ||
+                  translating ||
+                  formData.images.length >= 3
+                }
+                className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 mt-3"
+              >
+                {language === "en" ? "Add" : "បន្ថែម"}
+              </button>
+            </div>
+
+            <p className="text-[11px] text-gray-500 mt-2">
+              {language === "en"
+                ? "You can upload images or paste URLs. Max 3 total."
+                : "អ្នកអាចផ្ទុករូបភាព ឬបញ្ចូល URL។ អតិបរមា ៣ រូបភាពសរុប។"}
+            </p>
+          </div>
 
           {/* Image Grid with Kebab Menu */}
           <div className="grid grid-cols-3 gap-4 mb-4">
