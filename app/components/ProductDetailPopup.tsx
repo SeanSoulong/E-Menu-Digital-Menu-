@@ -8,8 +8,6 @@ import {
   FaMapMarkerAlt,
   FaPhoneAlt,
   FaExclamationTriangle,
-  FaShoppingCart,
-  FaWhatsapp,
 } from "react-icons/fa";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
