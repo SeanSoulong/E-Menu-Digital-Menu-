@@ -8,6 +8,9 @@ import {
   FaMapMarkerAlt,
   FaPhoneAlt,
   FaExclamationTriangle,
+  FaPlus,
+  FaMinus,
+  FaCopy,
 } from "react-icons/fa";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
@@ -15,6 +18,7 @@ import "swiper/css/pagination";
 import { Pagination, A11y } from "swiper/modules";
 import { useLanguage } from "../../context/LanguageContext";
 import { useTheme } from "../../context/ThemeContext";
+import { useState } from "react";
 
 interface ProductDetailPopupProps {
   product: Product | null;
@@ -27,6 +31,8 @@ export default function ProductDetailPopup({
 }: ProductDetailPopupProps) {
   const { language } = useLanguage();
   const { theme } = useTheme();
+  const [quantity, setQuantity] = useState(1);
+  const [copied, setCopied] = useState(false);
 
   if (!product) return null;
 
@@ -45,37 +51,103 @@ export default function ProductDetailPopup({
   // Get the main product image (first image or main image)
   const productImageUrl = product.images?.[0] || product.image;
 
-  // Create Telegram message with product details AND image
-  const getTelegramMessage = () => {
+  // Calculate total price
+  const calculateTotalPrice = () => {
+    const priceUSD = parseFloat(product.priceUsd.replace("$", ""));
+    const priceKHR = parseFloat(
+      product.priceKhr.replace("៛", "").replace(/,/g, "")
+    );
+    return {
+      usd: (priceUSD * quantity).toFixed(2),
+      khr: (priceKHR * quantity).toLocaleString(),
+    };
+  };
+
+  const totalPrice = calculateTotalPrice();
+
+  // Handle quantity change
+  const increaseQuantity = () => {
+    setQuantity((prev) => prev + 1);
+  };
+
+  const decreaseQuantity = () => {
+    if (quantity > 1) {
+      setQuantity((prev) => prev - 1);
+    }
+  };
+
+  // Create message with image markdown for Telegram (image will show as preview)
+  const getMessageWithImage = (isPreOrder: boolean) => {
     const productName = product.name[language];
     const productPrice = `${product.priceUsd} / ${product.priceKhr}`;
     const productDescription = product.description[language];
+    const totalPriceFormatted = `$${totalPrice.usd} / ៛${totalPrice.khr}`;
+    const divider = "━━━━━━━━━━━━━━━";
+    const imageMarkdown = `[🖼️ Product Image](${productImageUrl})`;
 
-    // Create a beautiful formatted message
-    const message =
-      language === "en"
-        ? `🛍️ *NEW ORDER REQUEST* 🛍️\n\n` +
-          `📦 *Product:* ${productName}\n` +
-          `💰 *Price:* ${productPrice}\n` +
-          `📝 *Description:* ${productDescription.substring(0, 100)}${
-            productDescription.length > 100 ? "..." : ""
-          }\n\n` +
-          `🔗 *Product Link:* ${window.location.href}\n\n` +
-          `👤 *Customer:* Waiting for customer info...\n` +
-          `📅 *Date:* ${new Date().toLocaleString()}\n\n` +
-          `_Please reply to this message to confirm the order._`
-        : `🛍️ *សំណើបញ្ជាទិញថ្មី* 🛍️\n\n` +
-          `📦 *ផលិតផល:* ${productName}\n` +
-          `💰 *តម្លៃ:* ${productPrice}\n` +
-          `📝 *ការពិពណ៌នា:* ${productDescription.substring(0, 100)}${
-            productDescription.length > 100 ? "..." : ""
-          }\n\n` +
-          `🔗 *តំណភ្ជាប់ផលិតផល:* ${window.location.href}\n\n` +
-          `👤 *អតិថិជន:* កំពុងរង់ចាំព័ត៌មាន...\n` +
-          `📅 *កាលបរិច្ឆេទ:* ${new Date().toLocaleString()}\n\n` +
-          `_សូមឆ្លើយតបទៅកាន់សារនេះដើម្បីបញ្ជាក់ការបញ្ជាទិញ._`;
-
-    return encodeURIComponent(message);
+    if (isPreOrder) {
+      return language === "en"
+        ? `${imageMarkdown}\n\n` +
+            `⏰ *PRE-ORDER REQUEST* ⏰\n${divider}\n\n` +
+            `🔹 *Product:* ${productName}\n` +
+            `🔹 *Price per item:* ${productPrice}\n` +
+            `🔹 *Quantity:* ${quantity}\n` +
+            `🔹 *Total Price:* ${totalPriceFormatted}\n\n` +
+            `⚠️ *Status:* Out of Stock - Pre-order\n\n` +
+            `📝 *Details:*\n${productDescription.substring(0, 150)}${
+              productDescription.length > 150 ? "..." : ""
+            }\n\n` +
+            `${divider}\n` +
+            `🔗 *Product Link:* [View Item](${window.location.href})\n` +
+            `📅 *Date:* ${new Date().toLocaleDateString()}\n` +
+            `🕐 *Time:* ${new Date().toLocaleTimeString()}\n\n` +
+            `✅ *Please confirm my pre-order request*`
+        : `${imageMarkdown}\n\n` +
+            `⏰ *សំណើបញ្ជាទិញទុកជាមុន* ⏰\n${divider}\n\n` +
+            `🔹 *ផលិតផល:* ${productName}\n` +
+            `🔹 *តម្លៃក្នុងមួយ:* ${productPrice}\n` +
+            `🔹 *បរិមាណ:* ${quantity}\n` +
+            `🔹 *តម្លៃសរុប:* ${totalPriceFormatted}\n\n` +
+            `⚠️ *ស្ថានភាព:* អស់ស្តុក - បញ្ជាទិញទុកជាមុន\n\n` +
+            `📝 *ព័ត៌មានលម្អិត:*\n${productDescription.substring(0, 150)}${
+              productDescription.length > 150 ? "..." : ""
+            }\n\n` +
+            `${divider}\n` +
+            `🔗 *តំណភ្ជាប់:* [មើលផលិតផល](${window.location.href})\n` +
+            `📅 *កាលបរិច្ឆេទ:* ${new Date().toLocaleDateString()}\n` +
+            `🕐 *ម៉ោង:* ${new Date().toLocaleTimeString()}\n\n` +
+            `✅ *សូមជួយបញ្ជាក់ការបញ្ជាទិញទុកជាមុនរបស់ខ្ញុំ*`;
+    } else {
+      return language === "en"
+        ? `${imageMarkdown}\n\n` +
+            `🛍️ *NEW ORDER REQUEST*\n${divider}\n\n` +
+            `🔹 *Product:* ${productName}\n` +
+            `🔹 *Price per item:* ${productPrice}\n` +
+            `🔹 *Quantity:* ${quantity}\n` +
+            `🔹 *Total Price:* ${totalPriceFormatted}\n\n` +
+            `📝 *Details:*\n${productDescription.substring(0, 150)}${
+              productDescription.length > 150 ? "..." : ""
+            }\n\n` +
+            `${divider}\n` +
+            `🔗 *Product Link:* [View Item](${window.location.href})\n` +
+            `📅 *Date:* ${new Date().toLocaleDateString()}\n` +
+            `🕐 *Time:* ${new Date().toLocaleTimeString()}\n\n` +
+            `✅ *Please confirm my order request*`
+        : `${imageMarkdown}\n\n` +
+            `🛍️ *សំណើបញ្ជាទិញថ្មី*\n${divider}\n\n` +
+            `🔹 *ផលិតផល:* ${productName}\n` +
+            `🔹 *តម្លៃក្នុងមួយ:* ${productPrice}\n` +
+            `🔹 *បរិមាណ:* ${quantity}\n` +
+            `🔹 *តម្លៃសរុប:* ${totalPriceFormatted}\n\n` +
+            `📝 *ព័ត៌មានលម្អិត:*\n${productDescription.substring(0, 150)}${
+              productDescription.length > 150 ? "..." : ""
+            }\n\n` +
+            `${divider}\n` +
+            `🔗 *តំណភ្ជាប់:* [មើលផលិតផល](${window.location.href})\n` +
+            `📅 *កាលបរិច្ឆេទ:* ${new Date().toLocaleDateString()}\n` +
+            `🕐 *ម៉ោង:* ${new Date().toLocaleTimeString()}\n\n` +
+            `✅ *សូមជួយបញ្ជាក់ការបញ្ជាទិញរបស់ខ្ញុំ*`;
+    }
   };
 
   // Extract username from telegram URL
@@ -88,41 +160,44 @@ export default function ProductDetailPopup({
 
   const telegramUsername = getTelegramUsername(telegramUrl);
 
-  // Create Telegram URL with message
-  const telegramOrderUrl = `https://t.me/${telegramUsername}?text=${getTelegramMessage()}`;
-
-  // Alternative: Create a share URL that includes image (works with Telegram Web)
+  // Share to Telegram with image
   const shareToTelegram = () => {
-    if (product.is_available) {
-      // For mobile devices, open Telegram app directly
-      const mobileTelegramUrl = `tg://msg?text=${getTelegramMessage()}`;
+    const isPreOrder = !product.is_available;
+    const message = getMessageWithImage(isPreOrder);
+    const encodedMessage = encodeURIComponent(message);
 
-      // Check if on mobile
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    // For mobile devices, open Telegram app directly
+    const mobileTelegramUrl = `tg://msg?text=${encodedMessage}`;
 
-      if (isMobile) {
-        // Try to open Telegram app first
-        window.open(mobileTelegramUrl, "_blank");
+    // Check if on mobile
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-        // Fallback to web version after short delay
-        setTimeout(() => {
-          window.open(telegramOrderUrl, "_blank");
-        }, 500);
-      } else {
-        // Desktop - open web version
-        window.open(telegramOrderUrl, "_blank");
-      }
+    if (isMobile) {
+      // Try to open Telegram app first
+      window.open(mobileTelegramUrl, "_blank");
+
+      // Fallback to web version after short delay
+      setTimeout(() => {
+        window.open(
+          `https://t.me/${telegramUsername}?text=${encodedMessage}`,
+          "_blank"
+        );
+      }, 500);
+    } else {
+      // Desktop - open web version
+      window.open(
+        `https://t.me/${telegramUsername}?text=${encodedMessage}`,
+        "_blank"
+      );
     }
-  };
-
-  const handleOrder = () => {
-    shareToTelegram();
   };
 
   // Function to copy image URL to clipboard
   const copyImageUrl = async () => {
     try {
       await navigator.clipboard.writeText(productImageUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
       alert(
         language === "en"
           ? "Image URL copied! You can paste it in Telegram."
@@ -131,6 +206,10 @@ export default function ProductDetailPopup({
     } catch (err) {
       console.error("Failed to copy:", err);
     }
+  };
+
+  const handleOrder = () => {
+    shareToTelegram();
   };
 
   return (
@@ -198,7 +277,7 @@ export default function ProductDetailPopup({
 
           {/* Product Details */}
           <div className="lg:w-1/2 flex flex-col justify-start">
-            {/* Out of Stock Warning */}
+            {/* Out of Stock Warning - Now shows pre-order option */}
             {!product.is_available && (
               <div
                 className="border rounded-xl p-4 mb-4"
@@ -223,8 +302,8 @@ export default function ProductDetailPopup({
                   style={{ color: theme.textColorSecondary }}
                 >
                   {language === "en"
-                    ? "This item is currently unavailable for ordering. You can contact us to pre-order."
-                    : "ផលិតផលនេះមិនអាចបញ្ជាទិញបាននាពេលនេះទេ។ អ្នកអាចទាក់ទងមកពួកយើងដើម្បីធ្វើការ​ pre-order បាន។"}
+                    ? "This item is currently out of stock. You can pre-order now and we will notify you when it's available."
+                    : "ផលិតផលនេះអស់ស្តុកបណ្តោះអាសន្ន។ អ្នកអាចបញ្ជាទិញទុកជាមុនបាន ហើយយើងនឹងជូនដំណឹងដល់អ្នកនៅពេលដែលវាមានវត្តមាន។"}
                 </p>
               </div>
             )}
@@ -257,6 +336,7 @@ export default function ProductDetailPopup({
                   ))}
               </div>
 
+              {/* Price Display */}
               <div
                 className="flex items-center justify-between mt-2 p-3 rounded-lg"
                 style={{ backgroundColor: `${theme.primaryColor}10` }}
@@ -279,48 +359,143 @@ export default function ProductDetailPopup({
                   {product.priceUsd}
                 </span>
               </div>
-            </div>
 
-            {/* Order Button - Opens Telegram with product info */}
-            {product.is_available && (
-              <div className="space-y-2 mb-4">
-                <button
-                  onClick={handleOrder}
-                  className="w-full py-3 rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg flex items-center justify-center gap-2"
-                  style={{ backgroundColor: theme.primaryColor }}
+              {/* Quantity Selector - Available for both in-stock and pre-order */}
+              <div
+                className="mt-4 p-3 rounded-lg border"
+                style={{ borderColor: `${theme.primaryColor}30` }}
+              >
+                <label
+                  className="block text-sm font-semibold mb-2"
+                  style={{ color: theme.textColor }}
                 >
-                  <FaTelegramPlane size={18} />
-                  {language === "en"
-                    ? "Order on Telegram"
-                    : "បញ្ជាទិញតាម Telegram"}
-                </button>
+                  {language === "en" ? "Quantity:" : "បរិមាណ:"}
+                </label>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={decreaseQuantity}
+                    className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
+                    style={{
+                      backgroundColor: `${theme.primaryColor}20`,
+                      color: theme.primaryColor,
+                    }}
+                    disabled={quantity <= 1}
+                  >
+                    <FaMinus size={14} />
+                  </button>
 
-                {/* Optional: Button to copy image URL */}
-                <button
-                  onClick={copyImageUrl}
-                  className="w-full py-2 rounded-xl text-sm transition-all duration-200 flex items-center justify-center gap-2"
+                  <span
+                    className="text-xl font-bold min-w-[50px] text-center"
+                    style={{ color: theme.textColor }}
+                  >
+                    {quantity}
+                  </span>
+
+                  <button
+                    onClick={increaseQuantity}
+                    className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
+                    style={{
+                      backgroundColor: `${theme.primaryColor}20`,
+                      color: theme.primaryColor,
+                    }}
+                  >
+                    <FaPlus size={14} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Total Price Display */}
+              {quantity > 0 && (
+                <div
+                  className="mt-3 p-3 rounded-lg"
                   style={{
-                    backgroundColor: `${theme.primaryColor}10`,
-                    color: theme.textColorSecondary,
+                    backgroundColor: `${theme.primaryColor}15`,
+                    borderLeft: `4px solid ${
+                      product.is_available
+                        ? theme.primaryColor
+                        : theme.secondaryColor
+                    }`,
                   }}
                 >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
-                    />
-                  </svg>
-                  {language === "en" ? "Copy Image URL" : "ចម្លង URL រូបភាព"}
-                </button>
-              </div>
-            )}
+                  <div className="flex justify-between items-center">
+                    <span
+                      className="text-sm font-semibold"
+                      style={{ color: theme.textColor }}
+                    >
+                      {language === "en" ? "Total Price:" : "តម្លៃសរុប:"}
+                    </span>
+                    <div className="text-right">
+                      <span
+                        className="text-lg font-bold"
+                        style={{
+                          color: product.is_available
+                            ? theme.primaryColor
+                            : theme.secondaryColor,
+                        }}
+                      >
+                        ៛{totalPrice.khr}
+                      </span>
+                      <span
+                        className="text-sm ml-2"
+                        style={{ color: theme.textColorSecondary }}
+                      >
+                        (${totalPrice.usd})
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Order Button - Changes based on stock status */}
+            <div className="space-y-2 mb-4">
+              <button
+                onClick={handleOrder}
+                className="w-full py-3 rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg flex items-center justify-center gap-2"
+                style={{
+                  backgroundColor: product.is_available
+                    ? theme.primaryColor
+                    : theme.secondaryColor,
+                  opacity: product.is_available ? 1 : 0.9,
+                }}
+              >
+                <FaTelegramPlane size={18} />
+                {product.is_available
+                  ? language === "en"
+                    ? `Order ${quantity} item${
+                        quantity > 1 ? "s" : ""
+                      } on Telegram`
+                    : `បញ្ជាទិញ ${quantity} មុខតាម Telegram`
+                  : language === "en"
+                  ? `Pre-order ${quantity} item${
+                      quantity > 1 ? "s" : ""
+                    } on Telegram`
+                  : `បញ្ជាទិញទុកជាមុន ${quantity} មុខតាម Telegram`}
+              </button>
+
+              {/* Button to copy image URL with better feedback */}
+              <button
+                onClick={copyImageUrl}
+                className="w-full py-2 rounded-xl text-sm transition-all duration-200 flex items-center justify-center gap-2"
+                style={{
+                  backgroundColor: `${theme.primaryColor}10`,
+                  color: theme.textColorSecondary,
+                }}
+              >
+                <FaCopy size={14} />
+                {language === "en" ? "Copy Image URL" : "ចម្លង URL រូបភាព"}
+              </button>
+
+              {/* Image preview note */}
+              <p
+                className="text-xs text-center mt-2"
+                style={{ color: theme.textColorSecondary }}
+              >
+                {language === "en"
+                  ? "📸 The product image will appear as a preview in Telegram"
+                  : "📸 រូបភាពផលិតផលនឹងបង្ហាញជារូបភាពតូចក្នុង Telegram"}
+              </p>
+            </div>
 
             {/* Contact / Social - Using theme settings (same as footer) */}
             <div
