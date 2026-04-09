@@ -379,10 +379,10 @@ ${
 
             {/* Order Button */}
             <div className="space-y-2 mb-4">
-              <p className="text-xs text-center mt-1 text-red-500">
+              <p className="text-xs text-center mt-1 text-red-500 ">
                 {language === "en"
-                  ? "📱 Click to open your Telegram app first to order smoothly!"
-                  : "📱 ចុចបើកកម្មវិធី Telegram របស់អ្នកជាមុនសិន​ដើម្បីបញ្ជាទិញបានយ៉ាងរលូន!"}
+                  ? "📱 If you click order or you do not see anything, do not worry, just go back to this page and click order again!"
+                  : "📱 ប្រសិនបើអ្នកចុចការបញ្ជាទិញឫកម្មង់ ហើយលោកអ្នកមិនឃើញអ្វីនោះទេ កុំបារម្មណ៍អ្នកគ្រាន់ត្រឡប់មកទំព័រនេះវិញហើយធ្វើការចុចបញ្ជាទិញឫកម្មង់ម្តងទៀត!"}
               </p>
               <button
                 onClick={handleOrder}
@@ -400,12 +400,12 @@ ${
                     ? `Order ${quantity} item${
                         quantity > 1 ? "s" : ""
                       } on Telegram`
-                    : `បញ្ជាទិញ ${quantity} មុខតាម Telegram`
+                    : `បញ្ជាទិញ ${quantity} `
                   : language === "en"
                   ? `Pre-order ${quantity} item${
                       quantity > 1 ? "s" : ""
                     } on Telegram`
-                  : `បញ្ជាទិញទុកជាមុន ${quantity} មុខតាម Telegram`}
+                  : `កម្មង់ ${quantity} `}
               </button>
 
               {/* Copy message button */}
