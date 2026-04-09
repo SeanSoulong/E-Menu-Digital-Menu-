@@ -163,8 +163,8 @@ export default function ProductDetailPopup({
         if (document.visibilityState === "visible") {
           const shouldCopy = confirm(
             language === "en"
-              ? "Telegram app didn't open. Would you like to copy the order message and open Telegram manually?"
-              : "កម្មវិធី Telegram មិនបើកទេ។ តើអ្នកចង់ចម្លងសារបញ្ជាទិញ ហើយបើក Telegram ដោយដៃទេ?"
+              ? "The Telegram app is open. You can now click to place an order."
+              : "កម្មវិធី Telegram បានបើកហើយ។ អ្នកអាចចុចបញ្ជាទិញបានហើយ។"
           );
           if (shouldCopy) {
             copyMessageToClipboard();
@@ -422,6 +422,11 @@ export default function ProductDetailPopup({
 
             {/* Order Button */}
             <div className="space-y-2 mb-4">
+              <p className="text-xs text-center mt-1 text-red-500">
+                {language === "en"
+                  ? "📱 Click to open your Telegram app first to order smoothly!"
+                  : "📱 ចុចបើកកម្មវិធី Telegram របស់អ្នកជាមុនសិន​ដើម្បីបញ្ជាទិញបានយ៉ាងរលូន!"}
+              </p>
               <button
                 onClick={handleOrder}
                 className="w-full py-3 rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg flex items-center justify-center gap-2 cursor-pointer"
@@ -447,7 +452,7 @@ export default function ProductDetailPopup({
               </button>
 
               {/* Copy message button */}
-              <button
+              {/* <button
                 onClick={copyMessageToClipboard}
                 className="w-full py-2 rounded-xl text-sm transition-all duration-200 flex items-center justify-center gap-2"
                 style={{
@@ -457,16 +462,8 @@ export default function ProductDetailPopup({
               >
                 <FaCopy size={14} />
                 {language === "en" ? "Copy Order Message" : "ចម្លងសារបញ្ជាទិញ"}
-              </button>
-
-              <p
-                className="text-xs text-center mt-2"
-                style={{ color: theme.textColorSecondary }}
-              >
-                {language === "en"
-                  ? "📱 Click to open Telegram app with your order details pre-filled"
-                  : "📱 ចុចដើម្បីបើកកម្មវិធី Telegram ជាមួយព័ត៌មានលម្អិតនៃការបញ្ជាទិញរបស់អ្នក"}
-              </p>
+              </button> */}
+              {/* //sdfjnsfnsnfjnjnfk */}
             </div>
 
             {/* Contact / Social */}

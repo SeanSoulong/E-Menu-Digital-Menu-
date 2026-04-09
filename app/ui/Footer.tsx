@@ -9,7 +9,7 @@ const Footer = () => {
 
   return (
     <footer
-      className="w-full py-5 mt-5"
+      className="w-full py-5 "
       style={{
         backgroundColor: theme.backgroundColor,
         color: theme.textColorSecondary,
