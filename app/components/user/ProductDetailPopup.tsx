@@ -32,7 +32,6 @@ export default function ProductDetailPopup({
   const { language } = useLanguage();
   const { theme } = useTheme();
   const [quantity, setQuantity] = useState(1);
-  const [copied, setCopied] = useState(false);
 
   if (!product) return null;
 
@@ -44,11 +43,11 @@ export default function ProductDetailPopup({
   const instagramUrl = theme.socialInstagramUrl || "https://instagram.com";
   const tiktokUrl = theme.socialTiktokUrl || "https://tiktok.com";
 
-  // Static links (can be moved to theme settings later)
+  // Static links
   const mapUrl = "https://maps.app.goo.gl/9xi5jv778zCMV5gs8";
   const phoneUrl = `tel:${product.contact || "098253453"}`;
 
-  // Get the main product image (first image or main image)
+  // Get the main product image
   const productImageUrl = product.images?.[0] || product.image;
 
   // Calculate total price
@@ -76,77 +75,50 @@ export default function ProductDetailPopup({
     }
   };
 
-  // Create message with image markdown for Telegram (image will show as preview)
-  const getMessageWithImage = (isPreOrder: boolean) => {
+  // Create message text (without any markdown that might break)
+  const getMessageText = (isPreOrder: boolean) => {
     const productName = product.name[language];
     const productPrice = `${product.priceUsd} / ${product.priceKhr}`;
     const productDescription = product.description[language];
     const totalPriceFormatted = `$${totalPrice.usd} / ៛${totalPrice.khr}`;
     const divider = "━━━━━━━━━━━━━━━";
-    const imageMarkdown = `🖼️ *Product Image:* ${productImageUrl}`;
 
     if (isPreOrder) {
       return language === "en"
-        ? `⏰ *PRE-ORDER REQUEST* ⏰\n${divider}\n\n` +
-            `🔹 *Product:* ${productName}\n` +
-            `🔹 *Price per item:* ${productPrice}\n` +
-            `🔹 *Quantity:* ${quantity}\n` +
-            `🔹 *Total Price:* ${totalPriceFormatted}\n\n` +
-            `⚠️ *Status:* Out of Stock - Pre-order\n\n` +
-            `📝 *Details:*\n${productDescription.substring(0, 150)}${
-              productDescription.length > 150 ? "..." : ""
-            }\n\n` +
-            `${divider}\n` +
-            `🔗 *Product Link:* ${window.location.href}\n` +
-            `📅 *Date:* ${new Date().toLocaleDateString()}\n` +
-            `🕐 *Time:* ${new Date().toLocaleTimeString()}\n\n` +
-            `${imageMarkdown}\n\n` +
-            `✅ *Please confirm my pre-order request*`
-        : `⏰ *សំណើបញ្ជាទិញទុកជាមុន* ⏰\n${divider}\n\n` +
-            `🔹 *ផលិតផល:* ${productName}\n` +
-            `🔹 *តម្លៃក្នុងមួយ:* ${productPrice}\n` +
-            `🔹 *បរិមាណ:* ${quantity}\n` +
-            `🔹 *តម្លៃសរុប:* ${totalPriceFormatted}\n\n` +
-            `⚠️ *ស្ថានភាព:* អស់ស្តុក - បញ្ជាទិញទុកជាមុន\n\n` +
-            `📝 *ព័ត៌មានលម្អិត:*\n${productDescription.substring(0, 150)}${
-              productDescription.length > 150 ? "..." : ""
-            }\n\n` +
-            `${divider}\n` +
-            `🔗 *តំណភ្ជាប់:* ${window.location.href}\n` +
-            `📅 *កាលបរិច្ឆេទ:* ${new Date().toLocaleDateString()}\n` +
-            `🕐 *ម៉ោង:* ${new Date().toLocaleTimeString()}\n\n` +
-            `${imageMarkdown}\n\n` +
-            `✅ *សូមជួយបញ្ជាក់ការបញ្ជាទិញទុកជាមុនរបស់ខ្ញុំ*`;
+        ? `⏰ PRE-ORDER REQUEST ⏰\n${divider}\n\nProduct: ${productName}\nPrice per item: ${productPrice}\nQuantity: ${quantity}\nTotal Price: ${totalPriceFormatted}\n\nStatus: Out of Stock - Pre-order\n\nDetails:\n${productDescription.substring(
+            0,
+            150
+          )}${
+            productDescription.length > 150 ? "..." : ""
+          }\n\n${divider}\nProduct Link: ${
+            window.location.href
+          }\nDate: ${new Date().toLocaleDateString()}\nTime: ${new Date().toLocaleTimeString()}\n\nProduct Image URL: ${productImageUrl}\n\nPlease confirm my pre-order request`
+        : `⏰ សំណើបញ្ជាទិញទុកជាមុន ⏰\n${divider}\n\nផលិតផល: ${productName}\nតម្លៃក្នុងមួយ: ${productPrice}\nបរិមាណ: ${quantity}\nតម្លៃសរុប: ${totalPriceFormatted}\n\nស្ថានភាព: អស់ស្តុក - បញ្ជាទិញទុកជាមុន\n\nព័ត៌មានលម្អិត:\n${productDescription.substring(
+            0,
+            150
+          )}${
+            productDescription.length > 150 ? "..." : ""
+          }\n\n${divider}\nតំណភ្ជាប់ផលិតផល: ${
+            window.location.href
+          }\nកាលបរិច្ឆេទ: ${new Date().toLocaleDateString()}\nម៉ោង: ${new Date().toLocaleTimeString()}\n\nURL រូបភាពផលិតផល: ${productImageUrl}\n\nសូមជួយបញ្ជាក់ការបញ្ជាទិញទុកជាមុនរបស់ខ្ញុំ`;
     } else {
       return language === "en"
-        ? `🛍️ *NEW ORDER REQUEST*\n${divider}\n\n` +
-            `🔹 *Product:* ${productName}\n` +
-            `🔹 *Price per item:* ${productPrice}\n` +
-            `🔹 *Quantity:* ${quantity}\n` +
-            `🔹 *Total Price:* ${totalPriceFormatted}\n\n` +
-            `📝 *Details:*\n${productDescription.substring(0, 150)}${
-              productDescription.length > 150 ? "..." : ""
-            }\n\n` +
-            `${divider}\n` +
-            `🔗 *Product Link:* ${window.location.href}\n` +
-            `📅 *Date:* ${new Date().toLocaleDateString()}\n` +
-            `🕐 *Time:* ${new Date().toLocaleTimeString()}\n\n` +
-            `${imageMarkdown}\n\n` +
-            `✅ *Please confirm my order request*`
-        : `🛍️ *សំណើបញ្ជាទិញថ្មី*\n${divider}\n\n` +
-            `🔹 *ផលិតផល:* ${productName}\n` +
-            `🔹 *តម្លៃក្នុងមួយ:* ${productPrice}\n` +
-            `🔹 *បរិមាណ:* ${quantity}\n` +
-            `🔹 *តម្លៃសរុប:* ${totalPriceFormatted}\n\n` +
-            `📝 *ព័ត៌មានលម្អិត:*\n${productDescription.substring(0, 150)}${
-              productDescription.length > 150 ? "..." : ""
-            }\n\n` +
-            `${divider}\n` +
-            `🔗 *តំណភ្ជាប់:* ${window.location.href}\n` +
-            `📅 *កាលបរិច្ឆេទ:* ${new Date().toLocaleDateString()}\n` +
-            `🕐 *ម៉ោង:* ${new Date().toLocaleTimeString()}\n\n` +
-            `${imageMarkdown}\n\n` +
-            `✅ *សូមជួយបញ្ជាក់ការបញ្ជាទិញរបស់ខ្ញុំ*`;
+        ? `🛍️ NEW ORDER REQUEST 🛍️\n${divider}\n\nProduct: ${productName}\nPrice per item: ${productPrice}\nQuantity: ${quantity}\nTotal Price: ${totalPriceFormatted}\n\nDetails:\n${productDescription.substring(
+            0,
+            150
+          )}${
+            productDescription.length > 150 ? "..." : ""
+          }\n\n${divider}\nProduct Link: ${
+            window.location.href
+          }\nDate: ${new Date().toLocaleDateString()}\nTime: ${new Date().toLocaleTimeString()}\n\nProduct Image URL: ${productImageUrl}\n\nPlease confirm my order request`
+        : `🛍️ សំណើបញ្ជាទិញថ្មី 🛍️\n${divider}\n\nផលិតផល: ${productName}\nតម្លៃក្នុងមួយ: ${productPrice}\nបរិមាណ: ${quantity}\nតម្លៃសរុប: ${totalPriceFormatted}\n\nព័ត៌មានលម្អិត:\n${productDescription.substring(
+            0,
+            150
+          )}${
+            productDescription.length > 150 ? "..." : ""
+          }\n\n${divider}\nតំណភ្ជាប់ផលិតផល: ${
+            window.location.href
+          }\nកាលបរិច្ឆេទ: ${new Date().toLocaleDateString()}\nម៉ោង: ${new Date().toLocaleTimeString()}\n\nURL រូបភាពផលិតផល: ${productImageUrl}\n\nសូមជួយបញ្ជាក់ការបញ្ជាទិញរបស់ខ្ញុំ`;
     }
   };
 
@@ -163,43 +135,44 @@ export default function ProductDetailPopup({
   // Share to Telegram - DIRECT to the business account
   const shareToTelegram = () => {
     const isPreOrder = !product.is_available;
-    const message = getMessageWithImage(isPreOrder);
+    const message = getMessageText(isPreOrder);
     const encodedMessage = encodeURIComponent(message);
 
-    // Create direct chat URL for Telegram
-    // This opens directly with the specific username without asking to select contact
-    const telegramDirectUrl = `https://t.me/${telegramUsername}?text=${encodedMessage}`;
-
-    // For mobile, also try the tg:// resolve URL for better app integration
+    // For mobile - use tg://resolve?domain=username&text=message
+    // This opens the Telegram app directly to the chat with pre-filled message
     const telegramAppUrl = `tg://resolve?domain=${telegramUsername}&text=${encodedMessage}`;
 
-    // Check if on mobile
+    // For desktop/web fallback
+    const telegramWebUrl = `https://t.me/${telegramUsername}?text=${encodedMessage}`;
+
+    // Detect if on mobile device
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
     if (isMobile) {
-      // Try to open Telegram app directly to the chat
-      window.open(telegramAppUrl, "_blank");
+      // On mobile: Try to open Telegram app directly
+      window.location.href = telegramAppUrl;
 
-      // Fallback to web version after short delay if app doesn't open
+      // Fallback: If app doesn't open after 1 second, try web version
       setTimeout(() => {
-        window.open(telegramDirectUrl, "_blank");
-      }, 500);
+        window.open(telegramWebUrl, "_blank");
+      }, 1000);
     } else {
-      // Desktop - open web version directly to chat
-      window.open(telegramDirectUrl, "_blank");
+      // On desktop: Open Telegram Web
+      window.open(telegramWebUrl, "_blank");
     }
   };
 
-  // Function to copy image URL to clipboard
-  const copyImageUrl = async () => {
+  // Function to copy message to clipboard (as backup)
+  const copyMessageToClipboard = async () => {
+    const isPreOrder = !product.is_available;
+    const message = getMessageText(isPreOrder);
+
     try {
-      await navigator.clipboard.writeText(productImageUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      await navigator.clipboard.writeText(message);
       alert(
         language === "en"
-          ? "Image URL copied! You can paste it in Telegram."
-          : "ចម្លង URL រូបភាពរួចរាល់! អ្នកអាចបិទភ្ជាប់ក្នុង Telegram ។"
+          ? "Order message copied! You can paste it in Telegram."
+          : "ចម្លងសារបញ្ជាទិញរួចរាល់! អ្នកអាចបិទភ្ជាប់ក្នុង Telegram ។"
       );
     } catch (err) {
       console.error("Failed to copy:", err);
@@ -275,7 +248,7 @@ export default function ProductDetailPopup({
 
           {/* Product Details */}
           <div className="lg:w-1/2 flex flex-col justify-start">
-            {/* Out of Stock Warning - Now shows pre-order option */}
+            {/* Out of Stock Warning */}
             {!product.is_available && (
               <div
                 className="border rounded-xl p-4 mb-4"
@@ -358,7 +331,7 @@ export default function ProductDetailPopup({
                 </span>
               </div>
 
-              {/* Quantity Selector - Available for both in-stock and pre-order */}
+              {/* Quantity Selector */}
               <div
                 className="mt-4 p-3 rounded-lg border"
                 style={{ borderColor: `${theme.primaryColor}30` }}
@@ -445,7 +418,7 @@ export default function ProductDetailPopup({
               )}
             </div>
 
-            {/* Order Button - Changes based on stock status */}
+            {/* Order Buttons */}
             <div className="space-y-2 mb-4">
               <button
                 onClick={handleOrder}
@@ -471,9 +444,9 @@ export default function ProductDetailPopup({
                   : `បញ្ជាទិញទុកជាមុន ${quantity} មុខតាម Telegram`}
               </button>
 
-              {/* Button to copy image URL with better feedback */}
+              {/* Copy Message Button (Backup) */}
               <button
-                onClick={copyImageUrl}
+                onClick={copyMessageToClipboard}
                 className="w-full py-2 rounded-xl text-sm transition-all duration-200 flex items-center justify-center gap-2"
                 style={{
                   backgroundColor: `${theme.primaryColor}10`,
@@ -481,21 +454,20 @@ export default function ProductDetailPopup({
                 }}
               >
                 <FaCopy size={14} />
-                {language === "en" ? "Copy Image URL" : "ចម្លង URL រូបភាព"}
+                {language === "en" ? "Copy Order Message" : "ចម្លងសារបញ្ជាទិញ"}
               </button>
 
-              {/* Image preview note */}
               <p
                 className="text-xs text-center mt-2"
                 style={{ color: theme.textColorSecondary }}
               >
                 {language === "en"
-                  ? "📸 The product image URL is included in the message"
-                  : "📸 URL រូបភាពផលិតផលត្រូវបានបញ្ចូលក្នុងសារ"}
+                  ? "📱 Clicking the button will open Telegram app with your order details"
+                  : "📱 ចុចប៊ូតុងនឹងបើកកម្មវិធី Telegram ជាមួយព័ត៌មានលម្អិតនៃការបញ្ជាទិញរបស់អ្នក"}
               </p>
             </div>
 
-            {/* Contact / Social - Using theme settings (same as footer) */}
+            {/* Contact / Social */}
             <div
               className="mt-auto pt-4 md:pt-6 border-t"
               style={{ borderColor: `${theme.primaryColor}20` }}
@@ -509,7 +481,6 @@ export default function ProductDetailPopup({
                   : "បញ្ជាទិញដោយទំនាក់ទំនងពួកយើង៖"}
               </p>
               <div className="flex flex-wrap items-center gap-2 md:gap-3">
-                {/* Facebook - from theme */}
                 {theme.showSocialLinks && facebookUrl && (
                   <a
                     href={facebookUrl}
@@ -523,7 +494,6 @@ export default function ProductDetailPopup({
                   </a>
                 )}
 
-                {/* Telegram - from theme */}
                 {theme.showSocialLinks && telegramUrl && (
                   <a
                     href={telegramUrl}
@@ -537,7 +507,6 @@ export default function ProductDetailPopup({
                   </a>
                 )}
 
-                {/* Instagram - from theme */}
                 {theme.showSocialLinks && instagramUrl && (
                   <a
                     href={instagramUrl}
@@ -557,7 +526,6 @@ export default function ProductDetailPopup({
                   </a>
                 )}
 
-                {/* TikTok - from theme */}
                 {theme.showSocialLinks && tiktokUrl && (
                   <a
                     href={tiktokUrl}
@@ -577,7 +545,6 @@ export default function ProductDetailPopup({
                   </a>
                 )}
 
-                {/* Map Location - Static */}
                 <a
                   href={mapUrl}
                   target="_blank"
@@ -589,7 +556,6 @@ export default function ProductDetailPopup({
                   <FaMapMarkerAlt size={16} className="md:w-4 md:h-4" />
                 </a>
 
-                {/* Phone - Static */}
                 <a
                   href={phoneUrl}
                   className="text-white p-2 md:p-3 rounded-xl transition-all duration-200 transform hover:scale-110 shadow-lg flex items-center gap-1 md:gap-2"
