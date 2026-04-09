@@ -3,8 +3,10 @@ import "./globals.css";
 import Footer from "./ui/Footer";
 import { LanguageProvider } from "./context/LanguageContext";
 import { AuthProvider } from "./context/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import { Kantumruy_Pro } from "next/font/google";
 import { Metadata } from "next";
+
 const kantumruyPro = Kantumruy_Pro({
   variable: "--font-kantumruy-pro",
   subsets: ["latin"],
@@ -15,6 +17,7 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
+
 export const metadata: Metadata = {
   title: "EMOJI | MENU",
   description:
@@ -34,11 +37,12 @@ export default function RootLayout({
       >
         <AuthProvider>
           <LanguageProvider>
-            <div className=" font-[Kantumruy_Pro]">
-              {" "}
-              {children}
-              <Footer />
-            </div>
+            <ThemeProvider>
+              <div className="font-[Kantumruy_Pro]">
+                {children}
+                <Footer />
+              </div>
+            </ThemeProvider>
           </LanguageProvider>
         </AuthProvider>
       </body>

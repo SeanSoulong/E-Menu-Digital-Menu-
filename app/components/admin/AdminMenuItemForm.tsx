@@ -1,9 +1,9 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { createClient } from "../../lib/supabase-client";
-import { MenuItem, Category } from "../data/types";
-import { useLanguage } from "../context/LanguageContext";
-import { uploadMultipleImages } from "../../lib/imageUpload";
+import { createClient } from "../../../lib/supabase-client";
+import { MenuItem, Category } from "../../data/types";
+import { useLanguage } from "../../context/LanguageContext";
+import { uploadMultipleImages } from "../../../lib/imageUpload";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 
 interface AdminMenuItemFormProps {

@@ -1,5 +1,5 @@
 "use client";
-import { Product } from "../data/types";
+import { Product } from "../../data/types";
 import Image from "next/image";
 import {
   FaTimes,
@@ -13,7 +13,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/pagination";
 import { Pagination, A11y } from "swiper/modules";
-import { useLanguage } from "../context/LanguageContext";
+import { useLanguage } from "../../context/LanguageContext";
 
 interface ProductDetailPopupProps {
   product: Product | null;

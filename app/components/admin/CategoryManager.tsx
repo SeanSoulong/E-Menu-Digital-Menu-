@@ -1,8 +1,8 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { createClient } from "../../lib/supabase-client";
-import { Category } from "../data/types";
-import { useLanguage } from "../context/LanguageContext";
+import { createClient } from "../../../lib/supabase-client";
+import { Category } from "../../data/types";
+import { useLanguage } from "../../context/LanguageContext";
 
 interface CategoryManagerProps {
   categories: Category[];

@@ -2,13 +2,16 @@
 import { useState, useEffect } from "react";
 import { createClient } from "../lib/supabase-client";
 import { Product, MenuItem, Category } from "./data/types";
-import Filters from "./components/Filters";
-import ProductGrid from "./components/ProductGrid";
-import ProductDetailPopup from "./components/ProductDetailPopup";
+import Filters from "./components/user/Filters";
+import ProductGrid from "./components/user/ProductGrid";
+import ProductDetailPopup from "./components/user/ProductDetailPopup";
 import { useLanguage } from "./context/LanguageContext";
+import { ThemeProvider, useTheme } from "./context/ThemeContext";
 
-export default function HomePage() {
+// Inner component that uses theme
+function HomePageContent() {
   const { language } = useLanguage();
+  const { theme } = useTheme();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState("All");
@@ -39,7 +42,6 @@ export default function HomePage() {
 
   const fetchMenuData = async () => {
     try {
-      console.log("Fetching menu data...");
       const [itemsResponse, categoriesResponse] = await Promise.all([
         supabase
           .from("menu_items")
@@ -53,17 +55,8 @@ export default function HomePage() {
         supabase.from("categories").select("*").order("name_en"),
       ]);
 
-      if (itemsResponse.error) {
-        console.error("Items error:", itemsResponse.error);
-        throw itemsResponse.error;
-      }
-      if (categoriesResponse.error) {
-        console.error("Categories error:", categoriesResponse.error);
-        throw categoriesResponse.error;
-      }
-
-      console.log("Fetched items:", itemsResponse.data?.length);
-      console.log("Fetched categories:", categoriesResponse.data?.length);
+      if (itemsResponse.error) throw itemsResponse.error;
+      if (categoriesResponse.error) throw categoriesResponse.error;
 
       setMenuItems(itemsResponse.data || []);
       setCategories(categoriesResponse.data || []);
@@ -97,7 +90,6 @@ export default function HomePage() {
     return categoryMatch && queryMatch;
   });
 
-  // Helper function to check if product is new (within last 7 days)
   const isNewArrival = (createdAt: string): boolean => {
     const createdDate = new Date(createdAt);
     const now = new Date();
@@ -130,7 +122,6 @@ export default function HomePage() {
     is_new_arrival: isNewArrival(item.created_at),
   });
 
-  // Prevent background scrolling when popup is open
   useEffect(() => {
     if (isPopupOpen) {
       document.body.style.overflow = "hidden";
@@ -145,16 +136,50 @@ export default function HomePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-lg">
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ backgroundColor: theme.backgroundColor }}
+      >
+        <div className="text-lg" style={{ color: theme.textColorSecondary }}>
           {language === "en" ? "Loading menu..." : "កំពុងផ្ទុកមីនុយ..."}
         </div>
       </div>
     );
   }
 
+  // Get grid columns based on products per row setting
+  const getGridCols = () => {
+    switch (theme.productsPerRow) {
+      case "2":
+        return "grid-cols-1 sm:grid-cols-2";
+      case "3":
+        return "grid-cols-2 sm:grid-cols-2 lg:grid-cols-3";
+      case "4":
+        return "grid-cols-2 sm:grid-cols-2 lg:grid-cols-4";
+      default:
+        return "grid-cols-2 sm:grid-cols-2 lg:grid-cols-3";
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-white p-4">
+    <div
+      className="min-h-screen p-4"
+      style={{
+        backgroundColor: theme.backgroundColor,
+        fontFamily: theme.fontFamily,
+      }}
+    >
+      {/* Header Image */}
+      {theme.headerImageUrl && (
+        <div className="mb-6 rounded-2xl overflow-hidden">
+          <img
+            src={theme.headerImageUrl}
+            alt="Header"
+            className="w-full h-32 md:h-48 object-cover"
+          />
+        </div>
+      )}
+
       <div
         className={`flex flex-col lg:flex-row transition-opacity ${
           isPopupOpen ? "opacity-20" : ""
@@ -169,10 +194,19 @@ export default function HomePage() {
 
         <div className="flex-1 lg:ml-6 mt-6">
           <div className="flex justify-between items-center p-4">
-            <h1 className="text-xl font-bold">
+            <h1
+              className="text-xl font-bold"
+              style={{
+                color: theme.textColor,
+                fontFamily: theme.headingFontFamily,
+              }}
+            >
               {language === "en" ? "Menu" : "មីនុយ"}
             </h1>
-            <div className="text-sm text-gray-600">
+            <div
+              className="text-sm"
+              style={{ color: theme.textColorSecondary }}
+            >
               {language === "en"
                 ? `${filteredProducts.length} items found`
                 : `ទំនិញ ${filteredProducts.length} មុខ`}
@@ -181,8 +215,8 @@ export default function HomePage() {
 
           <ProductGrid
             products={filteredProducts.map(convertToProduct)}
+            gridCols={getGridCols()}
             onProductClick={(p) => {
-              // Allow clicking on ALL products (both available and out of stock)
               const originalItem = menuItems.find((item) => item.id === p.id);
               setSelectedProduct(convertToProduct(originalItem!));
               setIsPopupOpen(true);
@@ -198,5 +232,14 @@ export default function HomePage() {
         />
       )}
     </div>
+  );
+}
+
+// Main export with ThemeProvider
+export default function HomePage() {
+  return (
+    <ThemeProvider>
+      <HomePageContent />
+    </ThemeProvider>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 import { useAuth } from "../context/AuthContext";
-import LoginForm from "../components/LoginForm";
-import AdminDashboard from "../components/AdminDashboard";
+import LoginForm from "../components/login/LoginForm";
+import AdminDashboard from "../components/admin/AdminDashboard";
 import { useLanguage } from "../context/LanguageContext";
 
 export default function AdminPage() {
