@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 import { useState, useEffect } from "react";
 import { createClient } from "../lib/supabase-client";
@@ -15,6 +16,7 @@ function HomePageContent() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState("All");
+  const [activeStockStatus, setActiveStockStatus] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -73,9 +75,11 @@ function HomePageContent() {
   }));
 
   const filteredProducts = menuItems.filter((item) => {
+    // Category filter
     const categoryMatch =
       activeCategory === "All" || item.categories?.name_en === activeCategory;
 
+    // Search query filter
     const name = language === "en" ? item.name_en : item.name_kh;
     const description =
       language === "en" ? item.description_en : item.description_kh;
@@ -87,7 +91,15 @@ function HomePageContent() {
       item.name_kh.toLowerCase().includes(searchQuery.toLowerCase()) ||
       description.toLowerCase().includes(searchQuery.toLowerCase());
 
-    return categoryMatch && queryMatch;
+    // Stock status filter
+    let stockMatch = true;
+    if (activeStockStatus === "instock") {
+      stockMatch = item.is_available === true;
+    } else if (activeStockStatus === "outofstock") {
+      stockMatch = item.is_available === false;
+    }
+
+    return categoryMatch && queryMatch && stockMatch;
   });
 
   const isNewArrival = (createdAt: string): boolean => {
@@ -179,7 +191,6 @@ function HomePageContent() {
           />
         </div>
       )}
-
       <div
         className={`flex flex-col lg:flex-row transition-opacity ${
           isPopupOpen ? "opacity-20" : ""
@@ -188,7 +199,9 @@ function HomePageContent() {
         <Filters
           categories={filterCategories}
           activeCategory={activeCategory}
+          activeStockStatus={activeStockStatus}
           onFilter={setActiveCategory}
+          onStockFilter={setActiveStockStatus}
           onSearch={setSearchQuery}
         />
 
@@ -224,7 +237,6 @@ function HomePageContent() {
           />
         </div>
       </div>
-
       {isPopupOpen && selectedProduct && (
         <ProductDetailPopup
           product={selectedProduct}

@@ -10,7 +10,6 @@ import {
   FaExclamationTriangle,
   FaPlus,
   FaMinus,
-  FaCopy,
 } from "react-icons/fa";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
@@ -45,7 +44,6 @@ export default function ProductDetailPopup({
   // Static links
   const mapUrl = "https://maps.app.goo.gl/9xi5jv778zCMV5gs8";
   const phoneUrl = `tel:${product.contact || "098253453"}`;
-  const productImageUrl = product.images?.[0] || product.image;
 
   // Calculate total price
   const calculateTotalPrice = () => {
@@ -80,39 +78,28 @@ export default function ProductDetailPopup({
   // Create the order message (plain text, no special encoding issues)
   const getOrderMessage = () => {
     const productName = product.name[language];
-    const productPrice = `${product.priceUsd} / ${product.priceKhr}`;
-    const productDescription = product.description[language];
     const totalPriceFormatted = `$${totalPrice.usd} / ៛${totalPrice.khr}`;
-    const divider = "━━━━━━━━━━━━━━━";
-    const orderType = !product.is_available ? "PRE-ORDER" : "NEW ORDER";
-    const emoji = !product.is_available ? "⏰" : "🛍️";
-    const statusText = !product.is_available
-      ? "\n⚠️ Status: Out of Stock - Pre-order"
-      : "";
+    const statusLabel = !product.is_available ? " [PRE-ORDER]" : "";
+    const header =
+      language === "en" ? "🛒 ORDER DETAILS" : "🛒 ព័ត៌មានការកុម្ម៉ង់";
 
-    return language === "en"
-      ? `${emoji} ${orderType} REQUEST ${emoji}\n${divider}\n\n📦 Product: ${productName}\n💰 Price per item: ${productPrice}\n🔢 Quantity: ${quantity}\n💵 Total Price: ${totalPriceFormatted}${statusText}\n\n📝 Details:\n${productDescription.substring(
-          0,
-          150
-        )}${
-          productDescription.length > 150 ? "..." : ""
-        }\n\n${divider}\n🔗 Product Link: ${
-          window.location.href
-        }\n📅 Date: ${new Date().toLocaleDateString()}\n⏰ Time: ${new Date().toLocaleTimeString()}\n\n🖼️ Product Image: ${productImageUrl}\n\n✅ Please confirm my ${
-          !product.is_available ? "pre-" : ""
-        }order request`
-      : `${emoji} ${orderType} REQUEST ${emoji}\n${divider}\n\n📦 ផលិតផល: ${productName}\n💰 តម្លៃក្នុងមួយ: ${productPrice}\n🔢 បរិមាណ: ${quantity}\n💵 តម្លៃសរុប: ${totalPriceFormatted}${statusText}\n\n📝 ព័ត៌មានលម្អិត:\n${productDescription.substring(
-          0,
-          150
-        )}${
-          productDescription.length > 150 ? "..." : ""
-        }\n\n${divider}\n🔗 តំណភ្ជាប់ផលិតផល: ${
-          window.location.href
-        }\n📅 កាលបរិច្ឆេទ: ${new Date().toLocaleDateString()}\n⏰ ម៉ោង: ${new Date().toLocaleTimeString()}\n\n🖼️ រូបភាពផលិតផល: ${productImageUrl}\n\n✅ សូមជួយបញ្ជាក់ការ${
-          !product.is_available ? "បញ្ជាទិញទុកជាមុន" : "បញ្ជាទិញ"
-        }របស់ខ្ញុំ`;
+    return `
+${header}${statusLabel}
+---------------------------
+📦 ${language === "en" ? "Product" : "ផលិតផល"}: ${productName}
+🔢 ${language === "en" ? "Quantity" : "បរិមាណ"}: ${quantity}
+💵 ${language === "en" ? "Total" : "តម្លៃសរុប"}: ${totalPriceFormatted}
+
+📍 ${language === "en" ? "Link" : "តំណភ្ជាប់"}: ${window.location.href}
+⏰ ${new Date().toLocaleString()}
+---------------------------
+${
+  language === "en"
+    ? "Please confirm my order. Thanks!"
+    : "សូមជួយបញ្ជាក់ការបញ្ជាទិញរបស់ខ្ញុំ។ អរគុណ!"
+}
+`.trim();
   };
-
   // Method 2: Using anchor click (most reliable)
   const openTelegramWithAnchor = (url: string) => {
     const link = document.createElement("a");
@@ -156,39 +143,9 @@ export default function ProductDetailPopup({
         // Android: Try anchor click first
         openTelegramWithAnchor(intentUrl);
       }
-
-      // Fallback: If app doesn't open, show copy option
-      timeoutRef.current = setTimeout(() => {
-        // Check if page is still visible (app didn't open)
-        if (document.visibilityState === "visible") {
-          const shouldCopy = confirm(
-            language === "en"
-              ? "The Telegram app is open. You can now click to place an order."
-              : "កម្មវិធី Telegram បានបើកហើយ។ អ្នកអាចចុចបញ្ជាទិញបានហើយ។"
-          );
-          if (shouldCopy) {
-            copyMessageToClipboard();
-            window.open(webUrl, "_blank");
-          }
-        }
-      }, 2500);
     } else {
       // Desktop: Open web version
       window.open(webUrl, "_blank");
-    }
-  };
-
-  // Copy message to clipboard
-  const copyMessageToClipboard = async () => {
-    try {
-      await navigator.clipboard.writeText(getOrderMessage());
-      alert(
-        language === "en"
-          ? "✓ Order message copied! You can now paste it in Telegram."
-          : "✓ ចម្លងសារបញ្ជាទិញរួចរាល់! អ្នកអាចបិទភ្ជាប់ក្នុង Telegram ។"
-      );
-    } catch (err) {
-      console.error("Failed to copy:", err);
     }
   };
 
