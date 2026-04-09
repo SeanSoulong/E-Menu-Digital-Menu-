@@ -18,7 +18,7 @@ import "swiper/css/pagination";
 import { Pagination, A11y } from "swiper/modules";
 import { useLanguage } from "../../context/LanguageContext";
 import { useTheme } from "../../context/ThemeContext";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 interface ProductDetailPopupProps {
   product: Product | null;
@@ -32,22 +32,19 @@ export default function ProductDetailPopup({
   const { language } = useLanguage();
   const { theme } = useTheme();
   const [quantity, setQuantity] = useState(1);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   if (!product) return null;
 
-  // Use theme settings for social links (same as footer)
+  // Use theme settings for social links
   const facebookUrl =
     theme.socialFacebookUrl ||
     "https://www.facebook.com/profile.php?id=100004264842600";
   const telegramUrl = theme.socialTelegramUrl || "https://t.me/sothimaktey";
-  const instagramUrl = theme.socialInstagramUrl || "https://instagram.com";
-  const tiktokUrl = theme.socialTiktokUrl || "https://tiktok.com";
 
   // Static links
   const mapUrl = "https://maps.app.goo.gl/9xi5jv778zCMV5gs8";
   const phoneUrl = `tel:${product.contact || "098253453"}`;
-
-  // Get the main product image
   const productImageUrl = product.images?.[0] || product.image;
 
   // Calculate total price
@@ -65,61 +62,9 @@ export default function ProductDetailPopup({
   const totalPrice = calculateTotalPrice();
 
   // Handle quantity change
-  const increaseQuantity = () => {
-    setQuantity((prev) => prev + 1);
-  };
-
+  const increaseQuantity = () => setQuantity((prev) => prev + 1);
   const decreaseQuantity = () => {
-    if (quantity > 1) {
-      setQuantity((prev) => prev - 1);
-    }
-  };
-
-  // Create message text (without any markdown that might break)
-  const getMessageText = (isPreOrder: boolean) => {
-    const productName = product.name[language];
-    const productPrice = `${product.priceUsd} / ${product.priceKhr}`;
-    const productDescription = product.description[language];
-    const totalPriceFormatted = `$${totalPrice.usd} / ៛${totalPrice.khr}`;
-    const divider = "━━━━━━━━━━━━━━━";
-
-    if (isPreOrder) {
-      return language === "en"
-        ? `⏰ PRE-ORDER REQUEST ⏰\n${divider}\n\nProduct: ${productName}\nPrice per item: ${productPrice}\nQuantity: ${quantity}\nTotal Price: ${totalPriceFormatted}\n\nStatus: Out of Stock - Pre-order\n\nDetails:\n${productDescription.substring(
-            0,
-            150
-          )}${
-            productDescription.length > 150 ? "..." : ""
-          }\n\n${divider}\nProduct Link: ${
-            window.location.href
-          }\nDate: ${new Date().toLocaleDateString()}\nTime: ${new Date().toLocaleTimeString()}\n\nProduct Image URL: ${productImageUrl}\n\nPlease confirm my pre-order request`
-        : `⏰ សំណើបញ្ជាទិញទុកជាមុន ⏰\n${divider}\n\nផលិតផល: ${productName}\nតម្លៃក្នុងមួយ: ${productPrice}\nបរិមាណ: ${quantity}\nតម្លៃសរុប: ${totalPriceFormatted}\n\nស្ថានភាព: អស់ស្តុក - បញ្ជាទិញទុកជាមុន\n\nព័ត៌មានលម្អិត:\n${productDescription.substring(
-            0,
-            150
-          )}${
-            productDescription.length > 150 ? "..." : ""
-          }\n\n${divider}\nតំណភ្ជាប់ផលិតផល: ${
-            window.location.href
-          }\nកាលបរិច្ឆេទ: ${new Date().toLocaleDateString()}\nម៉ោង: ${new Date().toLocaleTimeString()}\n\nURL រូបភាពផលិតផល: ${productImageUrl}\n\nសូមជួយបញ្ជាក់ការបញ្ជាទិញទុកជាមុនរបស់ខ្ញុំ`;
-    } else {
-      return language === "en"
-        ? `🛍️ NEW ORDER REQUEST 🛍️\n${divider}\n\nProduct: ${productName}\nPrice per item: ${productPrice}\nQuantity: ${quantity}\nTotal Price: ${totalPriceFormatted}\n\nDetails:\n${productDescription.substring(
-            0,
-            150
-          )}${
-            productDescription.length > 150 ? "..." : ""
-          }\n\n${divider}\nProduct Link: ${
-            window.location.href
-          }\nDate: ${new Date().toLocaleDateString()}\nTime: ${new Date().toLocaleTimeString()}\n\nProduct Image URL: ${productImageUrl}\n\nPlease confirm my order request`
-        : `🛍️ សំណើបញ្ជាទិញថ្មី 🛍️\n${divider}\n\nផលិតផល: ${productName}\nតម្លៃក្នុងមួយ: ${productPrice}\nបរិមាណ: ${quantity}\nតម្លៃសរុប: ${totalPriceFormatted}\n\nព័ត៌មានលម្អិត:\n${productDescription.substring(
-            0,
-            150
-          )}${
-            productDescription.length > 150 ? "..." : ""
-          }\n\n${divider}\nតំណភ្ជាប់ផលិតផល: ${
-            window.location.href
-          }\nកាលបរិច្ឆេទ: ${new Date().toLocaleDateString()}\nម៉ោង: ${new Date().toLocaleTimeString()}\n\nURL រូបភាពផលិតផល: ${productImageUrl}\n\nសូមជួយបញ្ជាក់ការបញ្ជាទិញរបស់ខ្ញុំ`;
-    }
+    if (quantity > 1) setQuantity((prev) => prev - 1);
   };
 
   // Extract username from telegram URL
@@ -132,59 +77,123 @@ export default function ProductDetailPopup({
 
   const telegramUsername = getTelegramUsername(telegramUrl);
 
-  // Share to Telegram - DIRECT to the business account
-  const shareToTelegram = () => {
-    const isPreOrder = !product.is_available;
-    const message = getMessageText(isPreOrder);
+  // Create the order message (plain text, no special encoding issues)
+  const getOrderMessage = () => {
+    const productName = product.name[language];
+    const productPrice = `${product.priceUsd} / ${product.priceKhr}`;
+    const productDescription = product.description[language];
+    const totalPriceFormatted = `$${totalPrice.usd} / ៛${totalPrice.khr}`;
+    const divider = "━━━━━━━━━━━━━━━";
+    const orderType = !product.is_available ? "PRE-ORDER" : "NEW ORDER";
+    const emoji = !product.is_available ? "⏰" : "🛍️";
+    const statusText = !product.is_available
+      ? "\n⚠️ Status: Out of Stock - Pre-order"
+      : "";
+
+    return language === "en"
+      ? `${emoji} ${orderType} REQUEST ${emoji}\n${divider}\n\n📦 Product: ${productName}\n💰 Price per item: ${productPrice}\n🔢 Quantity: ${quantity}\n💵 Total Price: ${totalPriceFormatted}${statusText}\n\n📝 Details:\n${productDescription.substring(
+          0,
+          150
+        )}${
+          productDescription.length > 150 ? "..." : ""
+        }\n\n${divider}\n🔗 Product Link: ${
+          window.location.href
+        }\n📅 Date: ${new Date().toLocaleDateString()}\n⏰ Time: ${new Date().toLocaleTimeString()}\n\n🖼️ Product Image: ${productImageUrl}\n\n✅ Please confirm my ${
+          !product.is_available ? "pre-" : ""
+        }order request`
+      : `${emoji} ${orderType} REQUEST ${emoji}\n${divider}\n\n📦 ផលិតផល: ${productName}\n💰 តម្លៃក្នុងមួយ: ${productPrice}\n🔢 បរិមាណ: ${quantity}\n💵 តម្លៃសរុប: ${totalPriceFormatted}${statusText}\n\n📝 ព័ត៌មានលម្អិត:\n${productDescription.substring(
+          0,
+          150
+        )}${
+          productDescription.length > 150 ? "..." : ""
+        }\n\n${divider}\n🔗 តំណភ្ជាប់ផលិតផល: ${
+          window.location.href
+        }\n📅 កាលបរិច្ឆេទ: ${new Date().toLocaleDateString()}\n⏰ ម៉ោង: ${new Date().toLocaleTimeString()}\n\n🖼️ រូបភាពផលិតផល: ${productImageUrl}\n\n✅ សូមជួយបញ្ជាក់ការ${
+          !product.is_available ? "បញ្ជាទិញទុកជាមុន" : "បញ្ជាទិញ"
+        }របស់ខ្ញុំ`;
+  };
+
+  // Method 2: Using anchor click (most reliable)
+  const openTelegramWithAnchor = (url: string) => {
+    const link = document.createElement("a");
+    link.href = url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Method 3: Direct navigation
+  const openTelegramDirect = (url: string) => {
+    window.location.href = url;
+  };
+
+  // Main function to handle Telegram order
+  const handleOrder = () => {
+    const message = getOrderMessage();
     const encodedMessage = encodeURIComponent(message);
 
-    // For mobile - use tg://resolve?domain=username&text=message
-    // This opens the Telegram app directly to the chat with pre-filled message
-    const telegramAppUrl = `tg://resolve?domain=${telegramUsername}&text=${encodedMessage}`;
+    // Create both intent URL and web URL
+    const intentUrl = `tg://resolve?domain=${telegramUsername}&text=${encodedMessage}`;
+    const webUrl = `https://t.me/${telegramUsername}?text=${encodedMessage}`;
 
-    // For desktop/web fallback
-    const telegramWebUrl = `https://t.me/${telegramUsername}?text=${encodedMessage}`;
-
-    // Detect if on mobile device
+    // Detect if on mobile
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
     if (isMobile) {
-      // On mobile: Try to open Telegram app directly
-      window.location.href = telegramAppUrl;
+      // Clear any existing timeout
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
 
-      // Fallback: If app doesn't open after 1 second, try web version
-      setTimeout(() => {
-        window.open(telegramWebUrl, "_blank");
-      }, 1000);
+      // Try to open Telegram app
+      if (isIOS) {
+        // iOS: Use window.location (works better)
+        openTelegramDirect(intentUrl);
+      } else {
+        // Android: Try anchor click first
+        openTelegramWithAnchor(intentUrl);
+      }
+
+      // Fallback: If app doesn't open, show copy option
+      timeoutRef.current = setTimeout(() => {
+        // Check if page is still visible (app didn't open)
+        if (document.visibilityState === "visible") {
+          const shouldCopy = confirm(
+            language === "en"
+              ? "Telegram app didn't open. Would you like to copy the order message and open Telegram manually?"
+              : "កម្មវិធី Telegram មិនបើកទេ។ តើអ្នកចង់ចម្លងសារបញ្ជាទិញ ហើយបើក Telegram ដោយដៃទេ?"
+          );
+          if (shouldCopy) {
+            copyMessageToClipboard();
+            window.open(webUrl, "_blank");
+          }
+        }
+      }, 2500);
     } else {
-      // On desktop: Open Telegram Web
-      window.open(telegramWebUrl, "_blank");
+      // Desktop: Open web version
+      window.open(webUrl, "_blank");
     }
   };
 
-  // Function to copy message to clipboard (as backup)
+  // Copy message to clipboard
   const copyMessageToClipboard = async () => {
-    const isPreOrder = !product.is_available;
-    const message = getMessageText(isPreOrder);
-
     try {
-      await navigator.clipboard.writeText(message);
+      await navigator.clipboard.writeText(getOrderMessage());
       alert(
         language === "en"
-          ? "Order message copied! You can paste it in Telegram."
-          : "ចម្លងសារបញ្ជាទិញរួចរាល់! អ្នកអាចបិទភ្ជាប់ក្នុង Telegram ។"
+          ? "✓ Order message copied! You can now paste it in Telegram."
+          : "✓ ចម្លងសារបញ្ជាទិញរួចរាល់! អ្នកអាចបិទភ្ជាប់ក្នុង Telegram ។"
       );
     } catch (err) {
       console.error("Failed to copy:", err);
     }
   };
 
-  const handleOrder = () => {
-    shareToTelegram();
-  };
-
   return (
-    <div className="fixed inset-0 flex items-center justify-center p-4 z-50 bg-black/50 backdrop-blur-sm font-[Kantumruy_Pro]">
+    <div className="fixed inset-0 flex items-center justify-center p-4 z-50 bg-black/50 backdrop-blur-sm">
       <div
         className="rounded-2xl shadow-2xl p-4 md:p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto relative"
         style={{
@@ -201,7 +210,7 @@ export default function ProductDetailPopup({
             color: theme.textColorSecondary,
           }}
         >
-          <FaTimes size={18} className="md:w-5 md:h-5" />
+          <FaTimes size={18} />
         </button>
 
         <div className="flex flex-col lg:flex-row gap-4 md:gap-6">
@@ -211,10 +220,7 @@ export default function ProductDetailPopup({
               modules={[Pagination, A11y]}
               spaceBetween={30}
               slidesPerView={1}
-              pagination={{
-                clickable: true,
-                dynamicBullets: true,
-              }}
+              pagination={{ clickable: true, dynamicBullets: true }}
               className="w-full h-full"
             >
               {product.images?.map((image, index) => (
@@ -231,7 +237,6 @@ export default function ProductDetailPopup({
                       }`}
                       style={{ borderColor: `${theme.primaryColor}30` }}
                     />
-                    {/* Out of Stock Overlay on Image */}
                     {!product.is_available && (
                       <div
                         className="absolute top-4 right-4 text-white px-3 py-1 rounded-lg text-sm font-bold"
@@ -322,7 +327,6 @@ export default function ProductDetailPopup({
                 >
                   {product.priceKhr}
                 </span>
-
                 <span
                   className="text-xs md:text-sm truncate max-w-[80px] md:max-w-[100px]"
                   style={{ color: theme.textColorSecondary }}
@@ -354,14 +358,12 @@ export default function ProductDetailPopup({
                   >
                     <FaMinus size={14} />
                   </button>
-
                   <span
                     className="text-xl font-bold min-w-[50px] text-center"
                     style={{ color: theme.textColor }}
                   >
                     {quantity}
                   </span>
-
                   <button
                     onClick={increaseQuantity}
                     className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
@@ -418,11 +420,11 @@ export default function ProductDetailPopup({
               )}
             </div>
 
-            {/* Order Buttons */}
+            {/* Order Button */}
             <div className="space-y-2 mb-4">
               <button
                 onClick={handleOrder}
-                className="w-full py-3 rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg flex items-center justify-center gap-2"
+                className="w-full py-3 rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg flex items-center justify-center gap-2 cursor-pointer"
                 style={{
                   backgroundColor: product.is_available
                     ? theme.primaryColor
@@ -444,7 +446,7 @@ export default function ProductDetailPopup({
                   : `បញ្ជាទិញទុកជាមុន ${quantity} មុខតាម Telegram`}
               </button>
 
-              {/* Copy Message Button (Backup) */}
+              {/* Copy message button */}
               <button
                 onClick={copyMessageToClipboard}
                 className="w-full py-2 rounded-xl text-sm transition-all duration-200 flex items-center justify-center gap-2"
@@ -462,8 +464,8 @@ export default function ProductDetailPopup({
                 style={{ color: theme.textColorSecondary }}
               >
                 {language === "en"
-                  ? "📱 Clicking the button will open Telegram app with your order details"
-                  : "📱 ចុចប៊ូតុងនឹងបើកកម្មវិធី Telegram ជាមួយព័ត៌មានលម្អិតនៃការបញ្ជាទិញរបស់អ្នក"}
+                  ? "📱 Click to open Telegram app with your order details pre-filled"
+                  : "📱 ចុចដើម្បីបើកកម្មវិធី Telegram ជាមួយព័ត៌មានលម្អិតនៃការបញ្ជាទិញរបស់អ្នក"}
               </p>
             </div>
 
@@ -488,12 +490,10 @@ export default function ProductDetailPopup({
                     rel="noopener noreferrer"
                     className="text-white p-2 md:p-3 rounded-xl transition-all duration-200 transform hover:scale-110 shadow-lg flex items-center justify-center"
                     style={{ backgroundColor: "#1877F2" }}
-                    aria-label="Facebook Page"
                   >
-                    <FaFacebookF size={16} className="md:w-4 md:h-4" />
+                    <FaFacebookF size={16} />
                   </a>
                 )}
-
                 {theme.showSocialLinks && telegramUrl && (
                   <a
                     href={telegramUrl}
@@ -501,81 +501,30 @@ export default function ProductDetailPopup({
                     rel="noopener noreferrer"
                     className="text-white p-2 md:p-3 rounded-xl transition-all duration-200 transform hover:scale-110 shadow-lg flex items-center justify-center"
                     style={{ backgroundColor: "#26A5E4" }}
-                    aria-label="Telegram Account"
                   >
-                    <FaTelegramPlane size={16} className="md:w-4 md:h-4" />
+                    <FaTelegramPlane size={16} />
                   </a>
                 )}
-
-                {theme.showSocialLinks && instagramUrl && (
-                  <a
-                    href={instagramUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-white p-2 md:p-3 rounded-xl transition-all duration-200 transform hover:scale-110 shadow-lg flex items-center justify-center"
-                    style={{ backgroundColor: "#E4405F" }}
-                    aria-label="Instagram"
-                  >
-                    <svg
-                      className="w-4 h-4 md:w-5 md:h-5"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" />
-                    </svg>
-                  </a>
-                )}
-
-                {theme.showSocialLinks && tiktokUrl && (
-                  <a
-                    href={tiktokUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-white p-2 md:p-3 rounded-xl transition-all duration-200 transform hover:scale-110 shadow-lg flex items-center justify-center"
-                    style={{ backgroundColor: "#000000" }}
-                    aria-label="TikTok"
-                  >
-                    <svg
-                      className="w-4 h-4 md:w-5 md:h-5"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 008.88-5.13v-7a10.46 10.46 0 004.5.94z" />
-                    </svg>
-                  </a>
-                )}
-
                 <a
                   href={mapUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-white p-2 md:p-3 rounded-xl transition-all duration-200 transform hover:scale-110 shadow-lg flex items-center justify-center"
                   style={{ backgroundColor: "#34A853" }}
-                  aria-label="Find on Map"
                 >
-                  <FaMapMarkerAlt size={16} className="md:w-4 md:h-4" />
+                  <FaMapMarkerAlt size={16} />
                 </a>
-
                 <a
                   href={phoneUrl}
                   className="text-white p-2 md:p-3 rounded-xl transition-all duration-200 transform hover:scale-110 shadow-lg flex items-center gap-1 md:gap-2"
                   style={{ backgroundColor: "#EA4335" }}
-                  aria-label="Call Us"
                 >
-                  <FaPhoneAlt size={14} className="md:w-4 md:h-4" />
+                  <FaPhoneAlt size={14} />
                   <span className="text-xs md:text-sm font-semibold truncate max-w-[80px] md:max-w-[100px]">
                     {product.contact}
                   </span>
                 </a>
               </div>
-              <p
-                className="text-xs mt-3"
-                style={{ color: theme.textColorSecondary }}
-              >
-                {language === "en"
-                  ? "Contact us for more information about this product"
-                  : "ទាក់ទងមកយើងខ្ញុំសម្រាប់ព័ត៌មានបន្ថែមអំពីផលិតផលនេះ"}
-              </p>
             </div>
           </div>
         </div>
