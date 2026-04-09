@@ -10,7 +10,6 @@ import {
   FaExclamationTriangle,
   FaPlus,
   FaMinus,
-  FaCopy,
 } from "react-icons/fa";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
@@ -18,11 +17,41 @@ import "swiper/css/pagination";
 import { Pagination, A11y } from "swiper/modules";
 import { useLanguage } from "../../context/LanguageContext";
 import { useTheme } from "../../context/ThemeContext";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
 interface ProductDetailPopupProps {
   product: Product | null;
   onClose: () => void;
+}
+
+declare global {
+  interface Window {
+    Telegram?: {
+      WebApp: {
+        ready: () => void;
+        expand: () => void;
+        close: () => void;
+        sendData: (data: string) => void;
+        showAlert: (message: string, callback?: () => void) => void;
+        showConfirm: (
+          message: string,
+          callback?: (confirmed: boolean) => void
+        ) => void;
+        HapticFeedback: {
+          impactOccurred: (style: string) => void;
+        };
+        initDataUnsafe?: {
+          user?: {
+            id: number;
+            first_name: string;
+            last_name?: string;
+            username?: string;
+            language_code?: string;
+          };
+        };
+      };
+    };
+  }
 }
 
 export default function ProductDetailPopup({
@@ -33,6 +62,29 @@ export default function ProductDetailPopup({
   const { theme } = useTheme();
   const [quantity, setQuantity] = useState(1);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [isInTelegramApp, setIsInTelegramApp] = useState(false);
+  const [telegramUser, setTelegramUser] = useState<{
+    name: string;
+    username: string;
+  } | null>(null);
+
+  useEffect(() => {
+    // Check if running inside Telegram Mini App
+    if (typeof window !== "undefined" && window.Telegram?.WebApp) {
+      setIsInTelegramApp(true);
+      window.Telegram.WebApp.ready();
+      window.Telegram.WebApp.expand();
+
+      // Get user info if available
+      const user = window.Telegram.WebApp.initDataUnsafe?.user;
+      if (user) {
+        setTelegramUser({
+          name: `${user.first_name} ${user.last_name || ""}`.trim(),
+          username: user.username ? `@${user.username}` : "",
+        });
+      }
+    }
+  }, []);
 
   if (!product) return null;
 
@@ -77,7 +129,7 @@ export default function ProductDetailPopup({
 
   const telegramUsername = getTelegramUsername(telegramUrl);
 
-  // Create the order message (plain text, no special encoding issues)
+  // Create the order message
   const getOrderMessage = () => {
     const productName = product.name[language];
     const productPrice = `${product.priceUsd} / ${product.priceKhr}`;
@@ -90,8 +142,13 @@ export default function ProductDetailPopup({
       ? "\n⚠️ Status: Out of Stock - Pre-order"
       : "";
 
+    // Add customer info if from Telegram
+    const customerInfo = telegramUser
+      ? `\n👤 Customer: ${telegramUser.name} ${telegramUser.username}`
+      : "";
+
     return language === "en"
-      ? `${emoji} ${orderType} REQUEST ${emoji}\n${divider}\n\n📦 Product: ${productName}\n💰 Price per item: ${productPrice}\n🔢 Quantity: ${quantity}\n💵 Total Price: ${totalPriceFormatted}${statusText}\n\n📝 Details:\n${productDescription.substring(
+      ? `${emoji} ${orderType} REQUEST ${emoji}\n${divider}\n\n📦 Product: ${productName}\n💰 Price per item: ${productPrice}\n🔢 Quantity: ${quantity}\n💵 Total Price: ${totalPriceFormatted}${statusText}${customerInfo}\n\n📝 Details:\n${productDescription.substring(
           0,
           150
         )}${
@@ -101,7 +158,7 @@ export default function ProductDetailPopup({
         }\n📅 Date: ${new Date().toLocaleDateString()}\n⏰ Time: ${new Date().toLocaleTimeString()}\n\n🖼️ Product Image: ${productImageUrl}\n\n✅ Please confirm my ${
           !product.is_available ? "pre-" : ""
         }order request`
-      : `${emoji} ${orderType} REQUEST ${emoji}\n${divider}\n\n📦 ផលិតផល: ${productName}\n💰 តម្លៃក្នុងមួយ: ${productPrice}\n🔢 បរិមាណ: ${quantity}\n💵 តម្លៃសរុប: ${totalPriceFormatted}${statusText}\n\n📝 ព័ត៌មានលម្អិត:\n${productDescription.substring(
+      : `${emoji} ${orderType} REQUEST ${emoji}\n${divider}\n\n📦 ផលិតផល: ${productName}\n💰 តម្លៃក្នុងមួយ: ${productPrice}\n🔢 បរិមាណ: ${quantity}\n💵 តម្លៃសរុប: ${totalPriceFormatted}${statusText}${customerInfo}\n\n📝 ព័ត៌មានលម្អិត:\n${productDescription.substring(
           0,
           150
         )}${
@@ -113,82 +170,88 @@ export default function ProductDetailPopup({
         }របស់ខ្ញុំ`;
   };
 
-  // Method 2: Using anchor click (most reliable)
-  const openTelegramWithAnchor = (url: string) => {
-    const link = document.createElement("a");
-    link.href = url;
-    link.target = "_blank";
-    link.rel = "noopener noreferrer";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  // Method 3: Direct navigation
-  const openTelegramDirect = (url: string) => {
-    window.location.href = url;
-  };
-
-  // Main function to handle Telegram order
-  const handleOrder = () => {
+  // FOR REGULAR BROWSER (Chrome, Safari, etc.) - Opens Telegram app
+  const handleOrderRegularBrowser = () => {
     const message = getOrderMessage();
     const encodedMessage = encodeURIComponent(message);
-
-    // Create both intent URL and web URL
     const intentUrl = `tg://resolve?domain=${telegramUsername}&text=${encodedMessage}`;
     const webUrl = `https://t.me/${telegramUsername}?text=${encodedMessage}`;
 
-    // Detect if on mobile
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
     if (isMobile) {
-      // Clear any existing timeout
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
-      // Try to open Telegram app
       if (isIOS) {
-        // iOS: Use window.location (works better)
-        openTelegramDirect(intentUrl);
+        window.location.href = intentUrl;
       } else {
-        // Android: Try anchor click first
-        openTelegramWithAnchor(intentUrl);
+        const link = document.createElement("a");
+        link.href = intentUrl;
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => document.body.removeChild(link), 100);
       }
 
-      // Fallback: If app doesn't open, show copy option
       timeoutRef.current = setTimeout(() => {
-        // Check if page is still visible (app didn't open)
         if (document.visibilityState === "visible") {
-          const shouldCopy = confirm(
+          const shouldOpenWeb = confirm(
             language === "en"
-              ? "The Telegram app is open. You can now click to place an order."
-              : "កម្មវិធី Telegram បានបើកហើយ។ អ្នកអាចចុចបញ្ជាទិញបានហើយ។"
+              ? "Telegram app didn't open. Open Telegram Web instead?"
+              : "កម្មវិធី Telegram មិនបើកទេ។ តើចង់បើក Telegram Web ជំនួសទេ?"
           );
-          if (shouldCopy) {
-            copyMessageToClipboard();
-            window.open(webUrl, "_blank");
-          }
+          if (shouldOpenWeb) window.open(webUrl, "_blank");
         }
-      }, 2500);
+      }, 2000);
     } else {
-      // Desktop: Open web version
       window.open(webUrl, "_blank");
     }
   };
 
-  // Copy message to clipboard
-  const copyMessageToClipboard = async () => {
-    try {
-      await navigator.clipboard.writeText(getOrderMessage());
-      alert(
-        language === "en"
-          ? "✓ Order message copied! You can now paste it in Telegram."
-          : "✓ ចម្លងសារបញ្ជាទិញរួចរាល់! អ្នកអាចបិទភ្ជាប់ក្នុង Telegram ។"
-      );
-    } catch (err) {
-      console.error("Failed to copy:", err);
+  // FOR TELEGRAM MINI APP - Sends order directly to bot
+  const handleOrderTelegramApp = () => {
+    if (!window.Telegram?.WebApp) return;
+
+    const message = getOrderMessage();
+
+    // Send data to bot
+    window.Telegram.WebApp.sendData(
+      JSON.stringify({
+        action: "order",
+        message: message,
+        product: {
+          id: product.id,
+          name: product.name,
+          price: product.priceUsd,
+          quantity: quantity,
+          total: totalPrice,
+        },
+      })
+    );
+
+    // Show confirmation
+    window.Telegram.WebApp.showAlert(
+      language === "en"
+        ? "✓ Order sent successfully! The shop will contact you soon."
+        : "✓ បានផ្ញើការបញ្ជាទិញដោយជោគជ័យ! ហាងនឹងទាក់ទងអ្នកឆាប់ៗនេះ។"
+    );
+
+    // Trigger haptic feedback
+    window.Telegram.WebApp.HapticFeedback.impactOccurred("medium");
+
+    // Close popup after 1.5 seconds
+    setTimeout(() => {
+      onClose();
+    }, 1500);
+  };
+
+  // Main order handler - detects environment automatically
+  const handleOrder = () => {
+    if (isInTelegramApp) {
+      handleOrderTelegramApp();
+    } else {
+      handleOrderRegularBrowser();
     }
   };
 
@@ -420,13 +483,8 @@ export default function ProductDetailPopup({
               )}
             </div>
 
-            {/* Order Button */}
+            {/* Order Button - Works for both environments */}
             <div className="space-y-2 mb-4">
-              <p className="text-xs text-center mt-1 text-red-500">
-                {language === "en"
-                  ? "📱 Click to open your Telegram app first to order smoothly!"
-                  : "📱 ចុចបើកកម្មវិធី Telegram របស់អ្នកជាមុនសិន​ដើម្បីបញ្ជាទិញបានយ៉ាងរលូន!"}
-              </p>
               <button
                 onClick={handleOrder}
                 className="w-full py-3 rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg flex items-center justify-center gap-2 cursor-pointer"
@@ -438,7 +496,15 @@ export default function ProductDetailPopup({
                 }}
               >
                 <FaTelegramPlane size={18} />
-                {product.is_available
+                {isInTelegramApp
+                  ? product.is_available
+                    ? language === "en"
+                      ? `Order ${quantity} item${quantity > 1 ? "s" : ""}`
+                      : `បញ្ជាទិញ ${quantity} មុខ`
+                    : language === "en"
+                    ? `Pre-order ${quantity} item${quantity > 1 ? "s" : ""}`
+                    : `បញ្ជាទិញទុកជាមុន ${quantity} មុខ`
+                  : product.is_available
                   ? language === "en"
                     ? `Order ${quantity} item${
                         quantity > 1 ? "s" : ""
@@ -451,18 +517,19 @@ export default function ProductDetailPopup({
                   : `បញ្ជាទិញទុកជាមុន ${quantity} មុខតាម Telegram`}
               </button>
 
-              {/* Copy message button */}
-              {/* <button
-                onClick={copyMessageToClipboard}
-                className="w-full py-2 rounded-xl text-sm transition-all duration-200 flex items-center justify-center gap-2"
-                style={{
-                  backgroundColor: `${theme.primaryColor}10`,
-                  color: theme.textColorSecondary,
-                }}
+              {/* Environment-specific message */}
+              <p
+                className="text-xs text-center mt-2"
+                style={{ color: theme.textColorSecondary }}
               >
-                <FaCopy size={14} />
-                {language === "en" ? "Copy Order Message" : "ចម្លងសារបញ្ជាទិញ"}
-              </button> */}
+                {isInTelegramApp
+                  ? language === "en"
+                    ? "✓ Your order will be sent directly to the shop"
+                    : "✓ ការបញ្ជាទិញរបស់អ្នកនឹងត្រូវបានផ្ញើដោយផ្ទាល់ទៅកាន់ហាង"
+                  : language === "en"
+                  ? "📱 Click to open Telegram app with your order details pre-filled"
+                  : "📱 ចុចដើម្បីបើកកម្មវិធី Telegram ជាមួយព័ត៌មានលម្អិតនៃការបញ្ជាទិញរបស់អ្នក"}
+              </p>
             </div>
 
             {/* Contact / Social */}
