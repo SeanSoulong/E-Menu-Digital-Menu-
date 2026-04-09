@@ -83,12 +83,11 @@ export default function ProductDetailPopup({
     const productDescription = product.description[language];
     const totalPriceFormatted = `$${totalPrice.usd} / ៛${totalPrice.khr}`;
     const divider = "━━━━━━━━━━━━━━━";
-    const imageMarkdown = `[🖼️ Product Image](${productImageUrl})`;
+    const imageMarkdown = `🖼️ *Product Image:* ${productImageUrl}`;
 
     if (isPreOrder) {
       return language === "en"
-        ? `${imageMarkdown}\n\n` +
-            `⏰ *PRE-ORDER REQUEST* ⏰\n${divider}\n\n` +
+        ? `⏰ *PRE-ORDER REQUEST* ⏰\n${divider}\n\n` +
             `🔹 *Product:* ${productName}\n` +
             `🔹 *Price per item:* ${productPrice}\n` +
             `🔹 *Quantity:* ${quantity}\n` +
@@ -98,12 +97,12 @@ export default function ProductDetailPopup({
               productDescription.length > 150 ? "..." : ""
             }\n\n` +
             `${divider}\n` +
-            `🔗 *Product Link:* [View Item](${window.location.href})\n` +
+            `🔗 *Product Link:* ${window.location.href}\n` +
             `📅 *Date:* ${new Date().toLocaleDateString()}\n` +
             `🕐 *Time:* ${new Date().toLocaleTimeString()}\n\n` +
+            `${imageMarkdown}\n\n` +
             `✅ *Please confirm my pre-order request*`
-        : `${imageMarkdown}\n\n` +
-            `⏰ *សំណើបញ្ជាទិញទុកជាមុន* ⏰\n${divider}\n\n` +
+        : `⏰ *សំណើបញ្ជាទិញទុកជាមុន* ⏰\n${divider}\n\n` +
             `🔹 *ផលិតផល:* ${productName}\n` +
             `🔹 *តម្លៃក្នុងមួយ:* ${productPrice}\n` +
             `🔹 *បរិមាណ:* ${quantity}\n` +
@@ -113,14 +112,14 @@ export default function ProductDetailPopup({
               productDescription.length > 150 ? "..." : ""
             }\n\n` +
             `${divider}\n` +
-            `🔗 *តំណភ្ជាប់:* [មើលផលិតផល](${window.location.href})\n` +
+            `🔗 *តំណភ្ជាប់:* ${window.location.href}\n` +
             `📅 *កាលបរិច្ឆេទ:* ${new Date().toLocaleDateString()}\n` +
             `🕐 *ម៉ោង:* ${new Date().toLocaleTimeString()}\n\n` +
+            `${imageMarkdown}\n\n` +
             `✅ *សូមជួយបញ្ជាក់ការបញ្ជាទិញទុកជាមុនរបស់ខ្ញុំ*`;
     } else {
       return language === "en"
-        ? `${imageMarkdown}\n\n` +
-            `🛍️ *NEW ORDER REQUEST*\n${divider}\n\n` +
+        ? `🛍️ *NEW ORDER REQUEST*\n${divider}\n\n` +
             `🔹 *Product:* ${productName}\n` +
             `🔹 *Price per item:* ${productPrice}\n` +
             `🔹 *Quantity:* ${quantity}\n` +
@@ -129,12 +128,12 @@ export default function ProductDetailPopup({
               productDescription.length > 150 ? "..." : ""
             }\n\n` +
             `${divider}\n` +
-            `🔗 *Product Link:* [View Item](${window.location.href})\n` +
+            `🔗 *Product Link:* ${window.location.href}\n` +
             `📅 *Date:* ${new Date().toLocaleDateString()}\n` +
             `🕐 *Time:* ${new Date().toLocaleTimeString()}\n\n` +
+            `${imageMarkdown}\n\n` +
             `✅ *Please confirm my order request*`
-        : `${imageMarkdown}\n\n` +
-            `🛍️ *សំណើបញ្ជាទិញថ្មី*\n${divider}\n\n` +
+        : `🛍️ *សំណើបញ្ជាទិញថ្មី*\n${divider}\n\n` +
             `🔹 *ផលិតផល:* ${productName}\n` +
             `🔹 *តម្លៃក្នុងមួយ:* ${productPrice}\n` +
             `🔹 *បរិមាណ:* ${quantity}\n` +
@@ -143,9 +142,10 @@ export default function ProductDetailPopup({
               productDescription.length > 150 ? "..." : ""
             }\n\n` +
             `${divider}\n` +
-            `🔗 *តំណភ្ជាប់:* [មើលផលិតផល](${window.location.href})\n` +
+            `🔗 *តំណភ្ជាប់:* ${window.location.href}\n` +
             `📅 *កាលបរិច្ឆេទ:* ${new Date().toLocaleDateString()}\n` +
             `🕐 *ម៉ោង:* ${new Date().toLocaleTimeString()}\n\n` +
+            `${imageMarkdown}\n\n` +
             `✅ *សូមជួយបញ្ជាក់ការបញ្ជាទិញរបស់ខ្ញុំ*`;
     }
   };
@@ -160,35 +160,33 @@ export default function ProductDetailPopup({
 
   const telegramUsername = getTelegramUsername(telegramUrl);
 
-  // Share to Telegram with image
+  // Share to Telegram - DIRECT to the business account
   const shareToTelegram = () => {
     const isPreOrder = !product.is_available;
     const message = getMessageWithImage(isPreOrder);
     const encodedMessage = encodeURIComponent(message);
 
-    // For mobile devices, open Telegram app directly
-    const mobileTelegramUrl = `tg://msg?text=${encodedMessage}`;
+    // Create direct chat URL for Telegram
+    // This opens directly with the specific username without asking to select contact
+    const telegramDirectUrl = `https://t.me/${telegramUsername}?text=${encodedMessage}`;
+
+    // For mobile, also try the tg:// resolve URL for better app integration
+    const telegramAppUrl = `tg://resolve?domain=${telegramUsername}&text=${encodedMessage}`;
 
     // Check if on mobile
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
     if (isMobile) {
-      // Try to open Telegram app first
-      window.open(mobileTelegramUrl, "_blank");
+      // Try to open Telegram app directly to the chat
+      window.open(telegramAppUrl, "_blank");
 
-      // Fallback to web version after short delay
+      // Fallback to web version after short delay if app doesn't open
       setTimeout(() => {
-        window.open(
-          `https://t.me/${telegramUsername}?text=${encodedMessage}`,
-          "_blank"
-        );
+        window.open(telegramDirectUrl, "_blank");
       }, 500);
     } else {
-      // Desktop - open web version
-      window.open(
-        `https://t.me/${telegramUsername}?text=${encodedMessage}`,
-        "_blank"
-      );
+      // Desktop - open web version directly to chat
+      window.open(telegramDirectUrl, "_blank");
     }
   };
 
@@ -474,7 +472,7 @@ export default function ProductDetailPopup({
               </button>
 
               {/* Button to copy image URL with better feedback */}
-              <button
+              {/* <button
                 onClick={copyImageUrl}
                 className="w-full py-2 rounded-xl text-sm transition-all duration-200 flex items-center justify-center gap-2"
                 style={{
@@ -484,17 +482,17 @@ export default function ProductDetailPopup({
               >
                 <FaCopy size={14} />
                 {language === "en" ? "Copy Image URL" : "ចម្លង URL រូបភាព"}
-              </button>
+              </button> */}
 
               {/* Image preview note */}
-              <p
+              {/* <p
                 className="text-xs text-center mt-2"
                 style={{ color: theme.textColorSecondary }}
               >
                 {language === "en"
-                  ? "📸 The product image will appear as a preview in Telegram"
-                  : "📸 រូបភាពផលិតផលនឹងបង្ហាញជារូបភាពតូចក្នុង Telegram"}
-              </p>
+                  ? "📸 The product image URL is included in the message"
+                  : "📸 URL រូបភាពផលិតផលត្រូវបានបញ្ចូលក្នុងសារ"}
+              </p> */}
             </div>
 
             {/* Contact / Social - Using theme settings (same as footer) */}
