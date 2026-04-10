@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FaTimes, FaUser, FaPhone, FaMapMarkerAlt } from "react-icons/fa";
 import { useLanguage } from "../../context/LanguageContext";
 import { useTheme } from "../../context/ThemeContext";
@@ -34,6 +34,14 @@ export default function CustomerInfoModal({
     phone: false,
     address: false,
   });
+  const [isFormValid, setIsFormValid] = useState(false);
+
+  // Check form validity whenever customer info changes
+  useEffect(() => {
+    const isNameValid = customerInfo.name.trim().length >= 2;
+    const isPhoneValid = /^[0-9+\-\s()]{8,20}$/.test(customerInfo.phone.trim());
+    setIsFormValid(isNameValid && isPhoneValid);
+  }, [customerInfo]);
 
   if (!isOpen) return null;
 
@@ -166,15 +174,14 @@ export default function CustomerInfoModal({
                     name: validateName(customerInfo.name),
                   });
                 }}
-                className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-all ${
-                  touched.name && errors.name
-                    ? "border-red-500 focus:ring-red-500"
-                    : "border-gray-300 focus:ring-blue-500"
-                }`}
+                className="w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-all"
                 style={{
+                  fontSize: "16px",
                   borderColor:
                     touched.name && errors.name
                       ? "#EF4444"
+                      : customerInfo.name.length >= 2 && touched.name
+                      ? "#10B981"
                       : `${theme.primaryColor}40`,
                   backgroundColor: theme.backgroundColor,
                   color: theme.textColor,
@@ -185,9 +192,36 @@ export default function CustomerInfoModal({
                     : "បញ្ចូលឈ្មោះពេញរបស់អ្នក"
                 }
               />
+              {touched.name &&
+                !errors.name &&
+                customerInfo.name.length >= 2 && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <svg
+                      className="w-5 h-5 text-green-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </div>
+                )}
             </div>
             {touched.name && errors.name && (
-              <p className="text-red-500 text-xs mt-1">{errors.name}</p>
+              <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                <span>⚠️</span> {errors.name}
+              </p>
+            )}
+            {touched.name && !errors.name && customerInfo.name.length >= 2 && (
+              <p className="text-green-500 text-xs mt-1 flex items-center gap-1">
+                <span>✓</span>{" "}
+                {language === "en" ? "Valid name" : "ឈ្មោះត្រឹមត្រូវ"}
+              </p>
             )}
           </div>
 
@@ -216,15 +250,16 @@ export default function CustomerInfoModal({
                     phone: validatePhone(customerInfo.phone),
                   });
                 }}
-                className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-all ${
-                  touched.phone && errors.phone
-                    ? "border-red-500 focus:ring-red-500"
-                    : "border-gray-300 focus:ring-blue-500"
-                }`}
+                className="w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-all"
                 style={{
+                  fontSize: "16px",
                   borderColor:
                     touched.phone && errors.phone
                       ? "#EF4444"
+                      : /^[0-9+\-\s()]{8,20}$/.test(customerInfo.phone) &&
+                        touched.phone &&
+                        customerInfo.phone
+                      ? "#10B981"
                       : `${theme.primaryColor}40`,
                   backgroundColor: theme.backgroundColor,
                   color: theme.textColor,
@@ -235,10 +270,43 @@ export default function CustomerInfoModal({
                     : "បញ្ចូលលេខទូរស័ព្ទរបស់អ្នក"
                 }
               />
+              {touched.phone &&
+                !errors.phone &&
+                /^[0-9+\-\s()]{8,20}$/.test(customerInfo.phone) &&
+                customerInfo.phone && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <svg
+                      className="w-5 h-5 text-green-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </div>
+                )}
             </div>
             {touched.phone && errors.phone && (
-              <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
+              <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                <span>⚠️</span> {errors.phone}
+              </p>
             )}
+            {touched.phone &&
+              !errors.phone &&
+              /^[0-9+\-\s()]{8,20}$/.test(customerInfo.phone) &&
+              customerInfo.phone && (
+                <p className="text-green-500 text-xs mt-1 flex items-center gap-1">
+                  <span>✓</span>{" "}
+                  {language === "en"
+                    ? "Valid phone number"
+                    : "លេខទូរស័ព្ទត្រឹមត្រូវ"}
+                </p>
+              )}
           </div>
 
           <div>
@@ -269,15 +337,14 @@ export default function CustomerInfoModal({
                   });
                 }}
                 rows={3}
-                className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-all resize-none ${
-                  touched.address && errors.address
-                    ? "border-red-500 focus:ring-red-500"
-                    : "border-gray-300 focus:ring-blue-500"
-                }`}
+                className="w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-all resize-none"
                 style={{
+                  fontSize: "16px",
                   borderColor:
                     touched.address && errors.address
                       ? "#EF4444"
+                      : customerInfo.address.length >= 5 && touched.address
+                      ? "#10B981"
                       : `${theme.primaryColor}40`,
                   backgroundColor: theme.backgroundColor,
                   color: theme.textColor,
@@ -288,29 +355,69 @@ export default function CustomerInfoModal({
                     : "បញ្ចូលអាសយដ្ឋានសម្រាប់ដឹកជញ្ជូន (ស្រេចចិត្ត)"
                 }
               />
+              {touched.address &&
+                !errors.address &&
+                customerInfo.address.length >= 5 && (
+                  <div className="absolute right-3 top-3">
+                    <svg
+                      className="w-5 h-5 text-green-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </div>
+                )}
             </div>
             {touched.address && errors.address && (
-              <p className="text-red-500 text-xs mt-1">{errors.address}</p>
+              <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                <span>⚠️</span> {errors.address}
+              </p>
             )}
+            {touched.address &&
+              !errors.address &&
+              customerInfo.address.length >= 5 && (
+                <p className="text-green-500 text-xs mt-1 flex items-center gap-1">
+                  <span>✓</span>{" "}
+                  {language === "en" ? "Valid address" : "អាសយដ្ឋានត្រឹមត្រូវ"}
+                </p>
+              )}
           </div>
 
           <div className="flex gap-3 pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 rounded-lg font-semibold transition-all"
+              className="flex-1 px-4 py-2 rounded-lg font-semibold transition-all hover:opacity-80"
               style={{
                 backgroundColor: `${theme.textColorSecondary}20`,
                 color: theme.textColor,
+                fontSize: "16px",
               }}
             >
               {language === "en" ? "Cancel" : "បោះបង់"}
             </button>
             <button
               type="submit"
-              disabled={loading}
-              className="flex-1 px-4 py-2 rounded-lg font-semibold text-white transition-all disabled:opacity-50"
-              style={{ backgroundColor: theme.primaryColor }}
+              disabled={loading || !isFormValid}
+              className={`flex-1 px-4 py-2 rounded-lg font-semibold text-white transition-all duration-200 ${
+                isFormValid && !loading
+                  ? "hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                  : "opacity-50 cursor-not-allowed"
+              }`}
+              style={{
+                backgroundColor:
+                  isFormValid && !loading
+                    ? theme.primaryColor
+                    : theme.textColorSecondary,
+                fontSize: "16px",
+              }}
             >
               {loading ? (
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto" />
@@ -321,6 +428,22 @@ export default function CustomerInfoModal({
               )}
             </button>
           </div>
+
+          {/* Form validity indicator */}
+          {!isFormValid && (touched.name || touched.phone) && (
+            <div
+              className="text-center text-xs mt-2 p-2 rounded-lg"
+              style={{
+                backgroundColor: `${theme.secondaryColor}10`,
+                color: theme.secondaryColor,
+              }}
+            >
+              <span>⚠️</span>{" "}
+              {language === "en"
+                ? "Please fill in all required fields correctly"
+                : "សូមបំពេញគ្រប់វាលដែលត្រូវការឱ្យបានត្រឹមត្រូវ"}
+            </div>
+          )}
         </form>
       </div>
     </div>
