@@ -16,9 +16,7 @@ interface PaginationProps {
 export default function Pagination({
   currentPage,
   totalPages,
-  totalItems,
-  startIndex,
-  endIndex,
+
   itemsPerPage,
   onPageChange,
   onItemsPerPageChange,

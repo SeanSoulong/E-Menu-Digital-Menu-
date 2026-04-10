@@ -76,15 +76,26 @@ export default function MobileMenuItemCard({
                     ? item.categories?.name_en
                     : item.categories?.name_kh}
                 </span>
+                <span
+                  className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${
+                    item.stock_quantity === 0
+                      ? "bg-red-100 text-red-800"
+                      : item.stock_quantity <= 5
+                      ? "bg-yellow-100 text-yellow-800"
+                      : "bg-green-100 text-green-800"
+                  }`}
+                >
+                  📦 {item.stock_quantity}
+                </span>
                 <button
                   onClick={() => onToggleAvailability(item)}
                   className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold transition-all duration-200 ${
-                    item.is_available
+                    item.is_available && item.stock_quantity > 0
                       ? "bg-gradient-to-br from-green-500 to-green-600 text-white"
                       : "bg-gradient-to-br from-red-500 to-red-600 text-white"
                   }`}
                 >
-                  {item.is_available
+                  {item.is_available && item.stock_quantity > 0
                     ? language === "en"
                       ? "InStock"
                       : "មានក្នុងស្តុក"

@@ -15,7 +15,6 @@ export default function DashboardHeader({
   user,
   onSignOut,
   onToggleThemeDesigner,
-  showThemeDesigner,
 }: DashboardHeaderProps) {
   const { language } = useLanguage();
 

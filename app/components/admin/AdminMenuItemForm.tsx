@@ -30,6 +30,7 @@ export default function AdminMenuItemForm({
     category_id: "",
     image_url: "",
     images: [] as string[],
+    stock_quantity: 0,
   });
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -37,14 +38,15 @@ export default function AdminMenuItemForm({
   const [activeKebabIndex, setActiveKebabIndex] = useState<number | null>(null);
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [translating, setTranslating] = useState(false);
+  const [restocking, setRestocking] = useState(false);
   const kebabMenuRef = useRef<HTMLDivElement>(null);
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
 
-  // NEW: image URL input state (allow add by URL)
+  // image URL input state
   const [imageUrlInput, setImageUrlInput] = useState("");
 
-  // NEW: basic URL + image extension check
+  // basic URL + image extension check
   const isValidImageUrl = (url: string) => {
     try {
       const u = new URL(url);
@@ -58,7 +60,7 @@ export default function AdminMenuItemForm({
     }
   };
 
-  // NEW: add image URL into images[] (max 3)
+  // add image URL into images[] (max 3)
   const addImageUrlToGallery = () => {
     const url = imageUrlInput.trim();
 
@@ -137,7 +139,6 @@ export default function AdminMenuItemForm({
     try {
       if (!text.trim()) return "";
 
-      // Free method using Google Translate (no API key required)
       const response = await fetch(
         `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLang}&tl=${targetLang}&dt=t&q=${encodeURIComponent(
           text
@@ -149,8 +150,6 @@ export default function AdminMenuItemForm({
       }
 
       const data = await response.json();
-
-      // Extract translated text
       const translatedText = data[0].map((item: string[]) => item[0]).join("");
 
       return translatedText;
@@ -196,7 +195,6 @@ export default function AdminMenuItemForm({
       ស្តុង: "Steamed",
     };
 
-    // Check if any common terms exist in the text
     const words = text.split(" ");
     const translatedWords = words.map((word) => {
       const cleanedWord = word.replace(/[១២៣៤៥៦៧៨៩០.,!?]/g, "");
@@ -206,7 +204,7 @@ export default function AdminMenuItemForm({
     return translatedWords.join(" ");
   };
 
-  // Auto-translate Khmer to English when Khmer input changes
+  // Auto-translate Khmer to English
   const handleKhmerInputChange = useDebounce(
     async (field: "name" | "description", khmerText: string) => {
       if (!khmerText.trim() || translating) return;
@@ -214,7 +212,6 @@ export default function AdminMenuItemForm({
       try {
         setTranslating(true);
 
-        // Only translate if Khmer text has been entered
         const hasKhmerCharacters = /[\u1780-\u17FF]/.test(khmerText);
         if (!hasKhmerCharacters) {
           setTranslating(false);
@@ -228,13 +225,6 @@ export default function AdminMenuItemForm({
             ...prev,
             [`${field}_en`]: translatedText,
           }));
-
-          // Show translation success notification
-          if (language === "en") {
-            console.log("Auto-translated successfully!");
-          } else {
-            console.log("បកប្រែស្វ័យប្រវត្តិដោយជោគជ័យ!");
-          }
         }
       } catch (error) {
         console.error("Auto-translation failed:", error);
@@ -243,21 +233,20 @@ export default function AdminMenuItemForm({
       }
     },
     1000
-  ); // 1 second debounce
+  );
 
-  // Handle Khmer name input
   const handleNameKhChange = (value: string) => {
     setFormData((prev) => ({ ...prev, name_kh: value }));
     handleKhmerInputChange("name", value);
   };
 
-  // Handle Khmer description input
   const handleDescriptionKhChange = (value: string) => {
     setFormData((prev) => ({ ...prev, description_kh: value }));
     handleKhmerInputChange("description", value);
   };
 
-  // Check screen size
+  const [isMobile, setIsMobile] = useState(false);
+
   useEffect(() => {
     const checkScreenSize = () => {
       setIsMobile(window.innerWidth < 768);
@@ -270,8 +259,6 @@ export default function AdminMenuItemForm({
       window.removeEventListener("resize", checkScreenSize);
     };
   }, []);
-
-  const [isMobile, setIsMobile] = useState(false);
 
   // Close kebab menu when clicking outside
   useEffect(() => {
@@ -321,6 +308,7 @@ export default function AdminMenuItemForm({
         category_id: editingItem.category_id,
         image_url: editingItem.image_url || "",
         images: editingItem.images || [],
+        stock_quantity: editingItem.stock_quantity || 0,
       });
     } else {
       setFormData({
@@ -332,6 +320,7 @@ export default function AdminMenuItemForm({
         category_id: categories[0]?.id || "",
         image_url: "",
         images: [],
+        stock_quantity: 0,
       });
     }
   }, [editingItem, categories]);
@@ -351,7 +340,6 @@ export default function AdminMenuItemForm({
 
       const files = Array.from(event.target.files);
 
-      // Check total number of images
       const totalAfterUpload = formData.images.length + files.length;
       if (totalAfterUpload > 3) {
         throw new Error(
@@ -361,7 +349,6 @@ export default function AdminMenuItemForm({
         );
       }
 
-      // Simulate progress
       const progressInterval = setInterval(() => {
         setUploadProgress((prev) => {
           if (prev >= 90) {
@@ -377,7 +364,6 @@ export default function AdminMenuItemForm({
       clearInterval(progressInterval);
       setUploadProgress(100);
 
-      // Add to images array
       setFormData((prev) => ({
         ...prev,
         images: [...prev.images, ...imageUrls],
@@ -431,6 +417,59 @@ export default function AdminMenuItemForm({
 
   const canAddMoreImages = formData.images.length < 3;
 
+  // Restock function
+  const handleRestock = async () => {
+    if (!editingItem) return;
+
+    const addStock = prompt(
+      language === "en"
+        ? `How many items to add to stock? Current stock: ${formData.stock_quantity}`
+        : `តើត្រូវបន្ថែមប៉ុន្មាន? ស្តុកបច្ចុប្បន្ន: ${formData.stock_quantity}`,
+      "10"
+    );
+
+    if (addStock && !isNaN(parseInt(addStock))) {
+      setRestocking(true);
+      try {
+        const response = await fetch("/api/restock", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            itemId: editingItem.id,
+            quantity: parseInt(addStock),
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setFormData((prev) => ({ ...prev, stock_quantity: data.newStock }));
+          alert(
+            language === "en"
+              ? `✓ Restocked ${addStock} items. New stock: ${data.newStock}`
+              : `✓ បានបន្ថែម ${addStock} មុខ។ ស្តុកថ្មី: ${data.newStock}`
+          );
+          onSave();
+        } else {
+          const error = await response.json();
+          alert(
+            language === "en"
+              ? `Restock failed: ${error.error}`
+              : `មិនអាចបន្ថែមស្តុកបានទេ: ${error.error}`
+          );
+        }
+      } catch (error) {
+        console.error("Restock error:", error);
+        alert(
+          language === "en"
+            ? "Failed to restock. Please try again."
+            : "មិនអាចបន្ថែមស្តុកបានទេ។ សូមព្យាយាមម្តងទៀត។"
+        );
+      } finally {
+        setRestocking(false);
+      }
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -471,7 +510,8 @@ export default function AdminMenuItemForm({
         category_id: formData.category_id,
         image_url: formData.image_url || null,
         images: formData.images,
-        is_available: true,
+        stock_quantity: formData.stock_quantity,
+        is_available: formData.stock_quantity > 0,
       };
 
       if (editingItem) {
@@ -497,6 +537,7 @@ export default function AdminMenuItemForm({
         category_id: categories[0]?.id || "",
         image_url: "",
         images: [],
+        stock_quantity: 0,
       });
       setActiveKebabIndex(null);
       setIsCategoryDropdownOpen(false);
@@ -520,7 +561,6 @@ export default function AdminMenuItemForm({
     }
   };
 
-  // Helper function to get category name
   const getCategoryName = (categoryId: string) => {
     if (!categoryId) {
       return language === "en" ? "Select Category" : "ជ្រើសរើសប្រភេទ";
@@ -535,7 +575,6 @@ export default function AdminMenuItemForm({
       : "ជ្រើសរើសប្រភេទ";
   };
 
-  // Upload icon component
   const UploadIcon = ({ className }: { className?: string }) => (
     <svg
       className={className}
@@ -571,7 +610,7 @@ export default function AdminMenuItemForm({
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-        {/* Enhanced Image Upload Section */}
+        {/* Auto-translation hint */}
         <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-xl">
           <p className="text-[14px] text-[#0E4123] font-bold text-center">
             {language === "en"
@@ -579,6 +618,8 @@ export default function AdminMenuItemForm({
               : "វាយជាភាសាខ្មែរ ភាសាអង់គ្លេសនឹងបំពេញដោយស្វ័យប្រវត្តិ"}
           </p>
         </div>
+
+        {/* Image Upload Section */}
         <div className="bg-gray-50 rounded-xl p-3 sm:p-4 border border-gray-200">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4">
             <label className="block text-sm font-semibold text-gray-700 mb-2 sm:mb-0">
@@ -625,13 +666,12 @@ export default function AdminMenuItemForm({
             </div>
           )}
 
-          {/* NEW: Image URL Input */}
+          {/* Image URL Input */}
           <div className="mt-3 sm:mt-4 mb-4">
             <label className="block text-xs font-semibold text-gray-700 mb-2">
               {language === "en" ? "Add Image URL" : "បន្ថែម URL រូបភាព"}
             </label>
-
-            <div className="flex-col gap-2 ">
+            <div className="flex-col gap-2">
               <input
                 type="url"
                 value={imageUrlInput}
@@ -650,7 +690,6 @@ export default function AdminMenuItemForm({
                   formData.images.length >= 3
                 }
               />
-
               <button
                 type="button"
                 onClick={addImageUrlToGallery}
@@ -665,7 +704,6 @@ export default function AdminMenuItemForm({
                 {language === "en" ? "Add" : "បន្ថែម"}
               </button>
             </div>
-
             <p className="text-[11px] text-gray-500 mt-2">
               {language === "en"
                 ? "You can upload images or paste URLs. Max 3 total."
@@ -684,15 +722,11 @@ export default function AdminMenuItemForm({
                   height={200}
                   className="w-full h-32 object-cover rounded-lg border-2 border-gray-200"
                 />
-
-                {/* Main Image Badge */}
                 {formData.image_url === image && (
                   <div className="absolute top-1 left-1 bg-gradient-to-br from-blue-500 to-blue-600 text-white text-xs px-2 py-1 rounded-lg font-semibold shadow-lg z-10">
                     {language === "en" ? "Main" : "ចម្បង"}
                   </div>
                 )}
-
-                {/* Kebab Menu Button */}
                 <div className="absolute top-1 right-1 z-20">
                   <button
                     type="button"
@@ -709,14 +743,11 @@ export default function AdminMenuItemForm({
                       <circle cx="12" cy="18" r="1.5" />
                     </svg>
                   </button>
-
-                  {/* Kebab Menu Dropdown */}
                   {activeKebabIndex === index && (
                     <div
                       ref={kebabMenuRef}
-                      className="absolute right-0 top-7 bg-white rounded-lg shadow-xl border border-gray-200 py-2 min-w-[140px] z-30 animate-in fade-in-0 zoom-in-95"
+                      className="absolute right-0 top-7 bg-white rounded-lg shadow-xl border border-gray-200 py-2 min-w-[140px] z-30"
                     >
-                      {/* Set as Main Option */}
                       <button
                         type="button"
                         onClick={() => setAsMainImage(image)}
@@ -738,8 +769,6 @@ export default function AdminMenuItemForm({
                         </svg>
                         {language === "en" ? "Set as Main" : "ដាក់ជាចម្បង"}
                       </button>
-
-                      {/* Remove Option */}
                       <button
                         type="button"
                         onClick={() => removeImage(index)}
@@ -765,8 +794,6 @@ export default function AdminMenuItemForm({
                 </div>
               </div>
             ))}
-
-            {/* Add Image Button */}
             {canAddMoreImages && (
               <button
                 type="button"
@@ -782,7 +809,6 @@ export default function AdminMenuItemForm({
             )}
           </div>
 
-          {/* Mobile Touch Instructions */}
           {isMobile && formData.images.length > 0 && (
             <div className="mt-2">
               <p className="text-xs text-blue-600 text-center font-medium">
@@ -903,8 +929,8 @@ export default function AdminMenuItemForm({
           </div>
         </div>
 
-        {/* Price and Category */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+        {/* Price, Stock, and Category */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1 sm:mb-2 pl-1">
               {language === "en" ? "Price ($)" : "តម្លៃ ($)"}
@@ -931,10 +957,57 @@ export default function AdminMenuItemForm({
 
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1 sm:mb-2 pl-1">
+              {language === "en" ? "Stock Quantity" : "បរិមាណស្តុក"}
+            </label>
+            <input
+              type="number"
+              min="0"
+              required
+              style={{ fontSize: "16px" }}
+              value={formData.stock_quantity}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  stock_quantity: parseInt(e.target.value) || 0,
+                }))
+              }
+              className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white placeholder-gray-400 text-sm sm:text-base"
+              placeholder="0"
+            />
+            {editingItem && (
+              <button
+                type="button"
+                onClick={handleRestock}
+                disabled={restocking}
+                className="mt-2 text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
+              >
+                {restocking ? (
+                  <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <svg
+                    className="w-3 h-3"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                )}
+                {language === "en" ? "Add Stock" : "បន្ថែមស្តុក"}
+              </button>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1 sm:mb-2 pl-1">
               {language === "en" ? "Category" : "ប្រភេទ"}
             </label>
 
-            {/* Custom Category Dropdown */}
             <div className="relative" ref={categoryDropdownRef}>
               <button
                 type="button"
@@ -956,7 +1029,6 @@ export default function AdminMenuItemForm({
                 />
               </button>
 
-              {/* Dropdown Menu */}
               {isCategoryDropdownOpen && (
                 <div className="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-10 max-h-60 overflow-y-auto">
                   <ul className="py-1">

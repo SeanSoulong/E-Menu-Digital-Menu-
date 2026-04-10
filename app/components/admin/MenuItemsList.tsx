@@ -54,7 +54,6 @@ export default function MenuItemsList({
   sortOrder,
   currentPage,
   itemsPerPage,
-  setItemsPerPage,
   totalPages,
   totalItems,
   startIndex,

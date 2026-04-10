@@ -39,6 +39,9 @@ export default function DesktopMenuItemTable({
               {language === "en" ? "Category" : "ប្រភេទ"}
             </th>
             <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+              {language === "en" ? "Stock" : "ស្តុក"}
+            </th>
+            <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
               {language === "en" ? "Images" : "រូបភាព"}
             </th>
             <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
@@ -108,6 +111,37 @@ export default function DesktopMenuItemTable({
                 </span>
               </td>
               <td className="px-4 md:px-6 py-4 whitespace-nowrap">
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${
+                      item.stock_quantity === 0
+                        ? "bg-red-100 text-red-800"
+                        : item.stock_quantity <= 5
+                        ? "bg-yellow-100 text-yellow-800 animate-pulse"
+                        : "bg-green-100 text-green-800"
+                    }`}
+                  >
+                    {item.stock_quantity} {language === "en" ? "left" : "នៅសល់"}
+                  </span>
+                  {item.stock_quantity <= 5 && item.stock_quantity > 0 && (
+                    <span
+                      className="text-xs text-yellow-600"
+                      title="Low stock!"
+                    >
+                      ⚠️
+                    </span>
+                  )}
+                  {item.stock_quantity === 0 && (
+                    <span
+                      className="text-xs text-red-600"
+                      title="Out of stock!"
+                    >
+                      🔴
+                    </span>
+                  )}
+                </div>
+              </td>
+              <td className="px-4 md:px-6 py-4 whitespace-nowrap">
                 <div className="flex -space-x-1 md:-space-x-2">
                   {item.images &&
                     item.images.slice(0, 3).map((image, index) => (
@@ -156,12 +190,12 @@ export default function DesktopMenuItemTable({
                 <button
                   onClick={() => onToggleAvailability(item)}
                   className={`inline-flex items-center px-3 md:px-4 py-1 md:py-2 rounded-xl text-xs md:text-sm font-semibold transition-all duration-200 transform hover:scale-105 ${
-                    item.is_available
+                    item.is_available && item.stock_quantity > 0
                       ? "bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg hover:shadow-xl"
                       : "bg-gradient-to-br from-red-500 to-red-600 text-white shadow-lg hover:shadow-xl"
                   }`}
                 >
-                  {item.is_available
+                  {item.is_available && item.stock_quantity > 0
                     ? language === "en"
                       ? "InStock"
                       : "មានក្នុងស្តុក"

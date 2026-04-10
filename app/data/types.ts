@@ -11,6 +11,7 @@ export interface Product {
   contact: string;
   is_available: boolean;
   is_new_arrival?: boolean;
+  stock_quantity?: number;
 }
 
 export interface MenuItem {
@@ -27,6 +28,7 @@ export interface MenuItem {
   is_available: boolean;
   is_new_arrival?: boolean;
   created_at: string;
+  stock_quantity: number;
 }
 
 export interface Category {
@@ -34,4 +36,18 @@ export interface Category {
   name_en: string;
   name_kh: string;
   created_at: string;
+}
+
+export interface Order {
+  id: number;
+  item_id: string;
+  item_name?: string;
+  quantity: number;
+  customer_name: string;
+  customer_phone: string;
+  customer_address?: string;
+  total_price: string;
+  status: "pending" | "confirmed" | "completed" | "cancelled";
+  created_at: string;
+  updated_at?: string;
 }
