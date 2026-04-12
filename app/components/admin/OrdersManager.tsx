@@ -1,8 +1,8 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLanguage } from "../../context/LanguageContext";
 import { useTheme } from "../../context/ThemeContext";
-import { Order } from "../../data/types";
+import { Order, MenuItem } from "../../data/types";
 import * as XLSX from "xlsx";
 
 interface OrdersManagerProps {
@@ -14,6 +14,8 @@ export default function OrdersManager({ onOrderUpdated }: OrdersManagerProps) {
   const { theme } = useTheme();
   const [orders, setOrders] = useState<Order[]>([]);
   const [allOrders, setAllOrders] = useState<Order[]>([]);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [filteredMenuItems, setFilteredMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
   const [stats, setStats] = useState({
@@ -25,6 +27,19 @@ export default function OrdersManager({ onOrderUpdated }: OrdersManagerProps) {
   const [updating, setUpdating] = useState<number | null>(null);
   const [deleting, setDeleting] = useState<number | null>(null);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
+  const [showManualOrderModal, setShowManualOrderModal] = useState(false);
+  const [productSearchTerm, setProductSearchTerm] = useState("");
+  const [showProductDropdown, setShowProductDropdown] = useState(false);
+  const productSearchRef = useRef<HTMLDivElement>(null);
+  const [manualOrderForm, setManualOrderForm] = useState({
+    item_id: "",
+    item_name: "",
+    quantity: 1,
+    customer_name: "",
+    customer_phone: "",
+    customer_address: "",
+    order_type: "walkin" as "walkin" | "messenger" | "online",
+  });
   const [editFormData, setEditFormData] = useState({
     customer_name: "",
     customer_phone: "",
@@ -41,9 +56,40 @@ export default function OrdersManager({ onOrderUpdated }: OrdersManagerProps) {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Fetch orders
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        productSearchRef.current &&
+        !productSearchRef.current.contains(event.target as Node)
+      ) {
+        setShowProductDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Filter products based on search term
+  useEffect(() => {
+    if (productSearchTerm) {
+      const filtered = menuItems.filter(
+        (item) =>
+          item.name_en
+            .toLowerCase()
+            .includes(productSearchTerm.toLowerCase()) ||
+          item.name_kh.toLowerCase().includes(productSearchTerm.toLowerCase())
+      );
+      setFilteredMenuItems(filtered);
+    } else {
+      setFilteredMenuItems(menuItems);
+    }
+  }, [productSearchTerm, menuItems]);
+
+  // Fetch orders and menu items
   useEffect(() => {
     fetchOrders();
+    fetchMenuItems();
   }, [filter]);
 
   const fetchOrders = async () => {
@@ -75,11 +121,114 @@ export default function OrdersManager({ onOrderUpdated }: OrdersManagerProps) {
     }
   };
 
+  const fetchMenuItems = async () => {
+    try {
+      const response = await fetch("/api/menu-items");
+      const data = await response.json();
+      setMenuItems(data.items || []);
+      setFilteredMenuItems(data.items || []);
+    } catch (error) {
+      console.error("Error fetching menu items:", error);
+    }
+  };
+
+  // Create manual order (walk-in or messenger)
+  const createManualOrder = async () => {
+    if (!manualOrderForm.item_id || manualOrderForm.quantity <= 0) {
+      alert(
+        language === "en"
+          ? "Please select an item and quantity"
+          : "សូមជ្រើសរើសផលិតផល និងបរិមាណ"
+      );
+      return;
+    }
+
+    const selectedItem = menuItems.find(
+      (item) => item.id === manualOrderForm.item_id
+    );
+    if (!selectedItem) return;
+
+    if (selectedItem.stock_quantity < manualOrderForm.quantity) {
+      alert(
+        language === "en"
+          ? `Not enough stock! Only ${selectedItem.stock_quantity} left.`
+          : `ស្តុកមិនគ្រប់ទេ! នៅសល់តែ ${selectedItem.stock_quantity} ប៉ុណ្ណោះ។`
+      );
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/place-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          itemId: manualOrderForm.item_id,
+          quantity: manualOrderForm.quantity,
+          productName: manualOrderForm.item_name,
+          customerName:
+            manualOrderForm.customer_name ||
+            (manualOrderForm.order_type === "walkin"
+              ? "Walk-in Customer"
+              : "Messenger Customer"),
+          customerPhone: manualOrderForm.customer_phone || "N/A",
+          customerAddress: manualOrderForm.customer_address || "",
+          totalPrice: `$${(
+            selectedItem.price * manualOrderForm.quantity
+          ).toFixed(2)}`,
+          orderType: manualOrderForm.order_type,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert(
+          language === "en"
+            ? "✓ Manual order created successfully! Stock deducted."
+            : "✓ បានបង្កើតការបញ្ជាទិញដោយជោគជ័យ! ស្តុកត្រូវបានកាត់បន្ថយ។"
+        );
+        setShowManualOrderModal(false);
+        setManualOrderForm({
+          item_id: "",
+          item_name: "",
+          quantity: 1,
+          customer_name: "",
+          customer_phone: "",
+          customer_address: "",
+          order_type: "walkin",
+        });
+        setProductSearchTerm("");
+        fetchOrders();
+        if (onOrderUpdated) onOrderUpdated();
+      } else {
+        alert(
+          language === "en" ? `Error: ${data.error}` : `កំហុស: ${data.error}`
+        );
+      }
+    } catch (error) {
+      console.error("Error creating manual order:", error);
+      alert(
+        language === "en"
+          ? "Failed to create order"
+          : "មិនអាចបង្កើតការបញ្ជាទិញបានទេ"
+      );
+    }
+  };
+
+  const selectProduct = (item: MenuItem) => {
+    setManualOrderForm({
+      ...manualOrderForm,
+      item_id: item.id,
+      item_name: language === "en" ? item.name_en : item.name_kh,
+    });
+    setProductSearchTerm(language === "en" ? item.name_en : item.name_kh);
+    setShowProductDropdown(false);
+  };
+
   // Filter and Sort orders
   const getFilteredAndSortedOrders = () => {
     let filtered = [...allOrders];
 
-    // Search filter
     if (searchTerm) {
       filtered = filtered.filter(
         (order) =>
@@ -92,7 +241,6 @@ export default function OrdersManager({ onOrderUpdated }: OrdersManagerProps) {
       );
     }
 
-    // Sort
     filtered.sort((a, b) => {
       let aValue: string | number | Date;
       let bValue: string | number | Date;
@@ -136,7 +284,6 @@ export default function OrdersManager({ onOrderUpdated }: OrdersManagerProps) {
   const endIndex = startIndex + itemsPerPage;
   const currentOrders = filteredAndSortedOrders.slice(startIndex, endIndex);
 
-  // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, sortBy, sortOrder, filter]);
@@ -446,9 +593,9 @@ export default function OrdersManager({ onOrderUpdated }: OrdersManagerProps) {
           </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="mt-4">
-          <div className="relative">
+        {/* Search Bar and Add Order Button */}
+        <div className="mt-4 flex gap-2">
+          <div className="relative flex-1">
             <svg
               className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4"
               fill="none"
@@ -475,8 +622,378 @@ export default function OrdersManager({ onOrderUpdated }: OrdersManagerProps) {
               style={{ fontSize: "16px" }}
             />
           </div>
+          <button
+            onClick={() => setShowManualOrderModal(true)}
+            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2 whitespace-nowrap"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+            {language === "en" ? "Add Manual Order" : "បន្ថែមការបញ្ជាទិញដោយដៃ"}
+          </button>
         </div>
       </div>
+
+      {/* Manual Order Modal with Searchable Product Selector */}
+      {showManualOrderModal && (
+        <div className="fixed inset-0 flex items-center justify-center p-4 z-50 bg-black/50 backdrop-blur-sm">
+          <div
+            className="rounded-2xl shadow-2xl p-6 max-w-md w-full relative max-h-[90vh] overflow-y-auto"
+            style={{
+              backgroundColor: theme.cardBackgroundColor,
+              color: theme.textColor,
+            }}
+          >
+            <button
+              onClick={() => setShowManualOrderModal(false)}
+              className="absolute top-3 right-3 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              style={{ color: theme.textColorSecondary }}
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+
+            <h2
+              className="text-xl font-bold mb-4"
+              style={{ color: theme.textColor }}
+            >
+              {language === "en"
+                ? "Add Manual Order"
+                : "បន្ថែមការបញ្ជាទិញដោយដៃ"}
+            </h2>
+
+            <div className="space-y-4">
+              {/* Order Type Selection */}
+              <div>
+                <label
+                  className="block text-sm font-semibold mb-2"
+                  style={{ color: theme.textColor }}
+                >
+                  {language === "en" ? "Order Type" : "ប្រភេទការបញ្ជាទិញ"}
+                </label>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setManualOrderForm({
+                        ...manualOrderForm,
+                        order_type: "walkin",
+                      })
+                    }
+                    className={`flex-1 px-3 py-2 rounded-lg font-semibold transition-all ${
+                      manualOrderForm.order_type === "walkin"
+                        ? "bg-purple-600 text-white"
+                        : "bg-gray-100 text-gray-700"
+                    }`}
+                  >
+                    🚶 {language === "en" ? "Walk-in" : "មកដល់ហាង"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setManualOrderForm({
+                        ...manualOrderForm,
+                        order_type: "messenger",
+                      })
+                    }
+                    className={`flex-1 px-3 py-2 rounded-lg font-semibold transition-all ${
+                      manualOrderForm.order_type === "messenger"
+                        ? "bg-purple-600 text-white"
+                        : "bg-gray-100 text-gray-700"
+                    }`}
+                  >
+                    💬 {language === "en" ? "Messenger" : "Messenger"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Searchable Product Selector */}
+              <div>
+                <label
+                  className="block text-sm font-semibold mb-2"
+                  style={{ color: theme.textColor }}
+                >
+                  {language === "en" ? "Select Product" : "ជ្រើសរើសផលិតផល"} *
+                </label>
+                <div ref={productSearchRef} className="relative">
+                  <div className="relative">
+                    <svg
+                      className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
+                    </svg>
+                    <input
+                      type="text"
+                      placeholder={
+                        language === "en"
+                          ? "Search product..."
+                          : "ស្វែងរកផលិតផល..."
+                      }
+                      value={productSearchTerm}
+                      onChange={(e) => {
+                        setProductSearchTerm(e.target.value);
+                        setShowProductDropdown(true);
+                      }}
+                      onFocus={() => setShowProductDropdown(true)}
+                      className="w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2"
+                      style={{
+                        borderColor: `${theme.primaryColor}40`,
+                        backgroundColor: theme.backgroundColor,
+                        color: theme.textColor,
+                        fontSize: "16px",
+                      }}
+                    />
+                  </div>
+
+                  {showProductDropdown && filteredMenuItems.length > 0 && (
+                    <div
+                      className="absolute z-10 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto"
+                      style={{
+                        backgroundColor: theme.cardBackgroundColor,
+                        borderColor: `${theme.primaryColor}30`,
+                      }}
+                    >
+                      {filteredMenuItems.map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => selectProduct(item)}
+                          className="w-full px-4 py-2 text-left hover:bg-gray-100 transition-colors flex justify-between items-center"
+                          style={{ color: theme.textColor }}
+                        >
+                          <div>
+                            <div className="font-medium">
+                              {language === "en" ? item.name_en : item.name_kh}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              ${item.price}
+                            </div>
+                          </div>
+                          <div className="text-xs text-gray-400">
+                            {language === "en" ? "Stock:" : "ស្តុក:"}{" "}
+                            {item.stock_quantity}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {showProductDropdown &&
+                    filteredMenuItems.length === 0 &&
+                    productSearchTerm && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border rounded-lg shadow-lg p-4 text-center text-gray-500">
+                        {language === "en"
+                          ? "No products found"
+                          : "មិនមានផលិតផល"}
+                      </div>
+                    )}
+                </div>
+                {manualOrderForm.item_name && (
+                  <div className="mt-2 p-2 bg-green-50 rounded-lg flex items-center gap-2">
+                    <svg
+                      className="w-4 h-4 text-green-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    <span className="text-sm text-green-700">
+                      {language === "en" ? "Selected: " : "បានជ្រើសរើស: "}
+                      {manualOrderForm.item_name}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Quantity */}
+              <div>
+                <label
+                  className="block text-sm font-semibold mb-2"
+                  style={{ color: theme.textColor }}
+                >
+                  {language === "en" ? "Quantity" : "បរិមាណ"} *
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  required
+                  value={manualOrderForm.quantity}
+                  onChange={(e) =>
+                    setManualOrderForm({
+                      ...manualOrderForm,
+                      quantity: parseInt(e.target.value) || 1,
+                    })
+                  }
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2"
+                  style={{
+                    borderColor: `${theme.primaryColor}40`,
+                    backgroundColor: theme.backgroundColor,
+                    color: theme.textColor,
+                    fontSize: "16px",
+                  }}
+                />
+              </div>
+
+              {/* Customer Name */}
+              <div>
+                <label
+                  className="block text-sm font-semibold mb-2"
+                  style={{ color: theme.textColor }}
+                >
+                  {language === "en" ? "Customer Name" : "ឈ្មោះអតិថិជន"}
+                  <span className="text-gray-400 text-xs ml-2">
+                    ({language === "en" ? "Optional" : "ស្រេចចិត្ត"})
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  value={manualOrderForm.customer_name}
+                  onChange={(e) =>
+                    setManualOrderForm({
+                      ...manualOrderForm,
+                      customer_name: e.target.value,
+                    })
+                  }
+                  placeholder={
+                    manualOrderForm.order_type === "walkin"
+                      ? "Walk-in Customer"
+                      : "Messenger Customer"
+                  }
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2"
+                  style={{
+                    borderColor: `${theme.primaryColor}40`,
+                    backgroundColor: theme.backgroundColor,
+                    color: theme.textColor,
+                    fontSize: "16px",
+                  }}
+                />
+              </div>
+
+              {/* Phone Number */}
+              <div>
+                <label
+                  className="block text-sm font-semibold mb-2"
+                  style={{ color: theme.textColor }}
+                >
+                  {language === "en" ? "Phone Number" : "លេខទូរស័ព្ទ"}
+                  <span className="text-gray-400 text-xs ml-2">
+                    ({language === "en" ? "Optional" : "ស្រេចចិត្ត"})
+                  </span>
+                </label>
+                <input
+                  type="tel"
+                  value={manualOrderForm.customer_phone}
+                  onChange={(e) =>
+                    setManualOrderForm({
+                      ...manualOrderForm,
+                      customer_phone: e.target.value,
+                    })
+                  }
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2"
+                  style={{
+                    borderColor: `${theme.primaryColor}40`,
+                    backgroundColor: theme.backgroundColor,
+                    color: theme.textColor,
+                    fontSize: "16px",
+                  }}
+                />
+              </div>
+
+              {/* Delivery Address */}
+              <div>
+                <label
+                  className="block text-sm font-semibold mb-2"
+                  style={{ color: theme.textColor }}
+                >
+                  {language === "en"
+                    ? "Delivery Address"
+                    : "អាសយដ្ឋានដឹកជញ្ជូន"}
+                  <span className="text-gray-400 text-xs ml-2">
+                    ({language === "en" ? "Optional" : "ស្រេចចិត្ត"})
+                  </span>
+                </label>
+                <textarea
+                  value={manualOrderForm.customer_address}
+                  onChange={(e) =>
+                    setManualOrderForm({
+                      ...manualOrderForm,
+                      customer_address: e.target.value,
+                    })
+                  }
+                  rows={2}
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 resize-none"
+                  style={{
+                    borderColor: `${theme.primaryColor}40`,
+                    backgroundColor: theme.backgroundColor,
+                    color: theme.textColor,
+                    fontSize: "16px",
+                  }}
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowManualOrderModal(false)}
+                  className="flex-1 px-4 py-2 rounded-lg font-semibold transition-all"
+                  style={{
+                    backgroundColor: `${theme.textColorSecondary}20`,
+                    color: theme.textColor,
+                  }}
+                >
+                  {language === "en" ? "Cancel" : "បោះបង់"}
+                </button>
+                <button
+                  onClick={createManualOrder}
+                  disabled={!manualOrderForm.item_id}
+                  className={`flex-1 px-4 py-2 rounded-lg font-semibold text-white transition-all ${
+                    manualOrderForm.item_id
+                      ? "bg-purple-600 hover:bg-purple-700"
+                      : "bg-gray-400 cursor-not-allowed"
+                  }`}
+                >
+                  {language === "en" ? "Create Order" : "បង្កើតការបញ្ជាទិញ"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Edit Modal */}
       {editingOrder && (
@@ -539,6 +1056,7 @@ export default function OrdersManager({ onOrderUpdated }: OrdersManagerProps) {
                     borderColor: `${theme.primaryColor}40`,
                     backgroundColor: theme.backgroundColor,
                     color: theme.textColor,
+                    fontSize: "16px",
                   }}
                 />
               </div>
@@ -565,6 +1083,7 @@ export default function OrdersManager({ onOrderUpdated }: OrdersManagerProps) {
                     borderColor: `${theme.primaryColor}40`,
                     backgroundColor: theme.backgroundColor,
                     color: theme.textColor,
+                    fontSize: "16px",
                   }}
                 />
               </div>
@@ -592,6 +1111,7 @@ export default function OrdersManager({ onOrderUpdated }: OrdersManagerProps) {
                     borderColor: `${theme.primaryColor}40`,
                     backgroundColor: theme.backgroundColor,
                     color: theme.textColor,
+                    fontSize: "16px",
                   }}
                 />
               </div>
@@ -619,6 +1139,7 @@ export default function OrdersManager({ onOrderUpdated }: OrdersManagerProps) {
                     borderColor: `${theme.primaryColor}40`,
                     backgroundColor: theme.backgroundColor,
                     color: theme.textColor,
+                    fontSize: "16px",
                   }}
                 />
               </div>
@@ -655,6 +1176,7 @@ export default function OrdersManager({ onOrderUpdated }: OrdersManagerProps) {
         </div>
       )}
 
+      {/* Rest of the component remains the same (orders table, pagination, etc.) */}
       {orders.length === 0 && filteredAndSortedOrders.length === 0 ? (
         <div className="text-center py-12">
           <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -756,7 +1278,7 @@ export default function OrdersManager({ onOrderUpdated }: OrdersManagerProps) {
                   d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                 />
               </svg>
-              {language === "en" ? "Export to Excel" : "នាំចេញទៅ Excel"}
+              {language === "en" ? "Export to Excel" : "Export to Excel"}
             </button>
           </div>
 
@@ -895,7 +1417,7 @@ export default function OrdersManager({ onOrderUpdated }: OrdersManagerProps) {
                           }
                         >
                           {deleting === order.id ? (
-                            <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+                            <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
                           ) : (
                             <svg
                               className="w-4 h-4"
