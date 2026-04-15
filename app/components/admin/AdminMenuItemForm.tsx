@@ -39,8 +39,11 @@ export default function AdminMenuItemForm({
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [translating, setTranslating] = useState(false);
   const [restocking, setRestocking] = useState(false);
+  const [showRestockModal, setShowRestockModal] = useState(false);
+  const [restockAmount, setRestockAmount] = useState("");
   const kebabMenuRef = useRef<HTMLDivElement>(null);
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
+  const restockInputRef = useRef<HTMLInputElement>(null);
   const supabase = createClient();
 
   // image URL input state
@@ -297,6 +300,15 @@ export default function AdminMenuItemForm({
     };
   }, []);
 
+  // Focus restock input when modal opens
+  useEffect(() => {
+    if (showRestockModal && restockInputRef.current) {
+      setTimeout(() => {
+        restockInputRef.current?.focus();
+      }, 100);
+    }
+  }, [showRestockModal]);
+
   useEffect(() => {
     if (editingItem) {
       setFormData({
@@ -417,56 +429,59 @@ export default function AdminMenuItemForm({
 
   const canAddMoreImages = formData.images.length < 3;
 
-  // Restock function
+  // Restock function with modal
   const handleRestock = async () => {
+    const amount = parseInt(restockAmount);
+    if (!amount || amount <= 0) {
+      alert(
+        language === "en"
+          ? "Please enter a valid number"
+          : "សូមបញ្ចូលលេខដែលត្រឹមត្រូវ"
+      );
+      return;
+    }
+
     if (!editingItem) return;
 
-    const addStock = prompt(
-      language === "en"
-        ? `How many items to add to stock? Current stock: ${formData.stock_quantity}`
-        : `តើត្រូវបន្ថែមប៉ុន្មាន? ស្តុកបច្ចុប្បន្ន: ${formData.stock_quantity}`,
-      "10"
-    );
+    setRestocking(true);
+    try {
+      const response = await fetch("/api/restock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          itemId: editingItem.id,
+          quantity: amount,
+        }),
+      });
 
-    if (addStock && !isNaN(parseInt(addStock))) {
-      setRestocking(true);
-      try {
-        const response = await fetch("/api/restock", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            itemId: editingItem.id,
-            quantity: parseInt(addStock),
-          }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setFormData((prev) => ({ ...prev, stock_quantity: data.newStock }));
-          alert(
-            language === "en"
-              ? `✓ Restocked ${addStock} items. New stock: ${data.newStock}`
-              : `✓ បានបន្ថែម ${addStock} មុខ។ ស្តុកថ្មី: ${data.newStock}`
-          );
-          onSave();
-        } else {
-          const error = await response.json();
-          alert(
-            language === "en"
-              ? `Restock failed: ${error.error}`
-              : `មិនអាចបន្ថែមស្តុកបានទេ: ${error.error}`
-          );
-        }
-      } catch (error) {
-        console.error("Restock error:", error);
+      if (response.ok) {
+        const data = await response.json();
+        setFormData((prev) => ({ ...prev, stock_quantity: data.newStock }));
         alert(
           language === "en"
-            ? "Failed to restock. Please try again."
-            : "មិនអាចបន្ថែមស្តុកបានទេ។ សូមព្យាយាមម្តងទៀត។"
+            ? `✓ Restocked ${amount} items. New stock: ${data.newStock}`
+            : `✓ បានបន្ថែម ${amount} មុខ។ ស្តុកថ្មី: ${data.newStock}`
         );
-      } finally {
-        setRestocking(false);
+        onSave();
+        setShowRestockModal(false);
+        setRestockAmount("");
+      } else {
+        const error = await response.json();
+        alert(
+          language === "en"
+            ? `Restock failed: ${error.error}`
+            : `មិនអាចបន្ថែមស្តុកបានទេ: ${error.error}`
+        );
       }
+    } catch (error) {
+      console.error("Restock error:", error);
+      alert(
+        language === "en"
+          ? "Failed to restock. Please try again."
+          : "មិនអាចបន្ថែមស្តុកបានទេ។ សូមព្យាយាមម្តងទៀត។"
+      );
+    } finally {
+      setRestocking(false);
     }
   };
 
@@ -962,6 +977,8 @@ export default function AdminMenuItemForm({
             <input
               type="number"
               min="0"
+              inputMode="numeric"
+              pattern="[0-9]*"
               required
               style={{ fontSize: "16px" }}
               value={formData.stock_quantity}
@@ -973,11 +990,28 @@ export default function AdminMenuItemForm({
               }
               className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white placeholder-gray-400 text-sm sm:text-base"
               placeholder="0"
+              onKeyDown={(e) => {
+                // Allow only numbers, backspace, delete, tab, enter, escape
+                const allowedKeys = [
+                  "Backspace",
+                  "Delete",
+                  "Tab",
+                  "Enter",
+                  "Escape",
+                  "ArrowLeft",
+                  "ArrowRight",
+                  "ArrowUp",
+                  "ArrowDown",
+                ];
+                if (!allowedKeys.includes(e.key) && !/^[0-9]$/.test(e.key)) {
+                  e.preventDefault();
+                }
+              }}
             />
             {editingItem && (
               <button
                 type="button"
-                onClick={handleRestock}
+                onClick={() => setShowRestockModal(true)}
                 disabled={restocking}
                 className="mt-2 text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
               >
@@ -1139,6 +1173,108 @@ export default function AdminMenuItemForm({
           )}
         </div>
       </form>
+
+      {/* Restock Modal */}
+      {showRestockModal && (
+        <div className="fixed inset-0 flex items-center justify-center p-4 z-50 bg-black/50 backdrop-blur-sm">
+          <div
+            className="rounded-2xl shadow-2xl p-6 max-w-sm w-full relative"
+            style={{
+              backgroundColor: "#fff",
+            }}
+          >
+            <button
+              onClick={() => {
+                setShowRestockModal(false);
+                setRestockAmount("");
+              }}
+              className="absolute top-3 right-3 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+
+            <h2 className="text-xl font-bold mb-4 text-gray-900">
+              {language === "en" ? "Add Stock" : "បន្ថែមស្តុក"}
+            </h2>
+
+            <div className="mb-4">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                {language === "en" ? "Quantity to add" : "បរិមាណដែលត្រូវបន្ថែម"}
+              </label>
+              <input
+                ref={restockInputRef}
+                type="number"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                min="1"
+                value={restockAmount}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === "" || /^\d+$/.test(value)) {
+                    setRestockAmount(value);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  // Allow only numbers, backspace, delete, tab, enter, escape
+                  const allowedKeys = [
+                    "Backspace",
+                    "Delete",
+                    "Tab",
+                    "Enter",
+                    "Escape",
+                    "ArrowLeft",
+                    "ArrowRight",
+                    "ArrowUp",
+                    "ArrowDown",
+                  ];
+                  if (!allowedKeys.includes(e.key) && !/^[0-9]$/.test(e.key)) {
+                    e.preventDefault();
+                  }
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                style={{ fontSize: "16px" }}
+                placeholder="10"
+                autoFocus
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowRestockModal(false);
+                  setRestockAmount("");
+                }}
+                className="flex-1 px-4 py-2 rounded-lg font-semibold transition-all bg-gray-200 text-gray-700 hover:bg-gray-300"
+              >
+                {language === "en" ? "Cancel" : "បោះបង់"}
+              </button>
+              <button
+                onClick={handleRestock}
+                disabled={!restockAmount || parseInt(restockAmount) <= 0}
+                className={`flex-1 px-4 py-2 rounded-lg font-semibold text-white transition-all ${
+                  restockAmount && parseInt(restockAmount) > 0
+                    ? "bg-blue-600 hover:bg-blue-700"
+                    : "bg-gray-400 cursor-not-allowed"
+                }`}
+              >
+                {language === "en" ? "Add Stock" : "បន្ថែម"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
