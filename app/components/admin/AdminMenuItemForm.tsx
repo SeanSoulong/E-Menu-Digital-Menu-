@@ -998,7 +998,7 @@ export default function AdminMenuItemForm({
                     />
                   </svg>
                 )}
-                {language === "en" ? "Add Stock" : "បន្ថែមស្តុក"}
+                {language === "en" ? "Add New Stock" : "បន្ថែមស្តុកថ្មី"}
               </button>
             )}
           </div>
