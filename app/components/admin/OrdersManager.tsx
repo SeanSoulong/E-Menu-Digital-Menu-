@@ -17,6 +17,7 @@ export default function OrdersManager({ onOrderUpdated }: OrdersManagerProps) {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [filteredMenuItems, setFilteredMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [creatingOrder, setCreatingOrder] = useState(false);
   const [filter, setFilter] = useState("all");
   const [stats, setStats] = useState({
     pending: 0,
@@ -31,6 +32,7 @@ export default function OrdersManager({ onOrderUpdated }: OrdersManagerProps) {
   const [productSearchTerm, setProductSearchTerm] = useState("");
   const [showProductDropdown, setShowProductDropdown] = useState(false);
   const productSearchRef = useRef<HTMLDivElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
   const [manualOrderForm, setManualOrderForm] = useState({
     item_id: "",
     item_name: "",
@@ -55,6 +57,18 @@ export default function OrdersManager({ onOrderUpdated }: OrdersManagerProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (showManualOrderModal || editingOrder) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [showManualOrderModal, editingOrder]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -157,6 +171,7 @@ export default function OrdersManager({ onOrderUpdated }: OrdersManagerProps) {
       return;
     }
 
+    setCreatingOrder(true);
     try {
       const response = await fetch("/api/place-order", {
         method: "POST",
@@ -184,8 +199,8 @@ export default function OrdersManager({ onOrderUpdated }: OrdersManagerProps) {
       if (response.ok) {
         alert(
           language === "en"
-            ? "✓ Manual order created successfully! Stock deducted."
-            : "✓ បានបង្កើតការបញ្ជាទិញដោយជោគជ័យ! ស្តុកត្រូវបានកាត់បន្ថយ។"
+            ? "✓ Manual order created successfully!"
+            : "✓ បានបង្កើតការបញ្ជាទិញដោយជោគជ័យ!"
         );
         setShowManualOrderModal(false);
         setManualOrderForm({
@@ -212,6 +227,8 @@ export default function OrdersManager({ onOrderUpdated }: OrdersManagerProps) {
           ? "Failed to create order"
           : "មិនអាចបង្កើតការបញ្ជាទិញបានទេ"
       );
+    } finally {
+      setCreatingOrder(false);
     }
   };
 
@@ -313,7 +330,7 @@ export default function OrdersManager({ onOrderUpdated }: OrdersManagerProps) {
           alert(
             language === "en"
               ? "Order cancelled. Stock has been restored if it was deducted."
-              : "បានបោះបង់ការបញ្ជាទិញ។ ស្តុកត្រូវបានស្តារឡើងវិញ។"
+              : "បានបោះបង់ការបញ្ជាទិញ។ ស្តុកត្រូវបានកំណត់ឡើងវិញ។"
           );
         }
       } else {
@@ -646,8 +663,16 @@ export default function OrdersManager({ onOrderUpdated }: OrdersManagerProps) {
 
       {/* Manual Order Modal with Searchable Product Selector */}
       {showManualOrderModal && (
-        <div className="fixed inset-0 flex items-center justify-center p-4 z-50 bg-black/50 backdrop-blur-sm">
+        <div
+          className="fixed inset-0 flex items-center justify-center p-4 z-50 bg-black/50 backdrop-blur-sm"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowManualOrderModal(false);
+            }
+          }}
+        >
           <div
+            ref={modalRef}
             className="rounded-2xl shadow-2xl p-6 max-w-md w-full relative max-h-[90vh] overflow-y-auto"
             style={{
               backgroundColor: theme.cardBackgroundColor,
@@ -980,14 +1005,23 @@ export default function OrdersManager({ onOrderUpdated }: OrdersManagerProps) {
                 </button>
                 <button
                   onClick={createManualOrder}
-                  disabled={!manualOrderForm.item_id}
-                  className={`flex-1 px-4 py-2 rounded-lg font-semibold text-white transition-all ${
-                    manualOrderForm.item_id
+                  disabled={!manualOrderForm.item_id || creatingOrder}
+                  className={`flex-1 px-4 py-2 rounded-lg font-semibold text-white transition-all flex items-center justify-center gap-2 ${
+                    manualOrderForm.item_id && !creatingOrder
                       ? "bg-purple-600 hover:bg-purple-700"
                       : "bg-gray-400 cursor-not-allowed"
                   }`}
                 >
-                  {language === "en" ? "Create Order" : "បង្កើតការបញ្ជាទិញ"}
+                  {creatingOrder ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      {language === "en" ? "Creating..." : "កំពុងបង្កើត..."}
+                    </>
+                  ) : language === "en" ? (
+                    "Create Order"
+                  ) : (
+                    "បង្កើតការបញ្ជាទិញ"
+                  )}
                 </button>
               </div>
             </div>
@@ -1159,11 +1193,14 @@ export default function OrdersManager({ onOrderUpdated }: OrdersManagerProps) {
                 <button
                   type="submit"
                   disabled={updating === editingOrder.id}
-                  className="flex-1 px-4 py-2 rounded-lg font-semibold text-white transition-all"
+                  className="flex-1 px-4 py-2 rounded-lg font-semibold text-white transition-all flex items-center justify-center gap-2"
                   style={{ backgroundColor: theme.primaryColor }}
                 >
                   {updating === editingOrder.id ? (
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto" />
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      {language === "en" ? "Saving..." : "កំពុងរក្សាទុក..."}
+                    </>
                   ) : language === "en" ? (
                     "Save Changes"
                   ) : (
